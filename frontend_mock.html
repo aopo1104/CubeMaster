@@ -172,7 +172,7 @@
     <div class="section-title">连接</div>
     <div class="field">
       <label>代理地址</label>
-      <input id="baseUrl" value="http://127.0.0.1:8000" />
+      <input id="baseUrl" value="http://127.0.0.1:3001" />
     </div>
   </div>
 
@@ -296,13 +296,11 @@
       <input id="calcTime" value="0" />
     </div>
     <div class="field">
-      <label title="多托优化资源分配策略&#10;BestfitMaxEmptySizeFirst：优先选剩余空间最大的托盘，适合多托均衡&#10;BestfitMaxWeightUtilFirst：优先夹载重量想关的托盘，适合重量限制场景&#10;BestfitMaxVolUtilFirst：优先将体积装到最高，少加托盘&#10;BestfitMinContainersFirst：尽量减少托盘数&#10;BestfitMinCostFirst：最低运输成本优先">bestFitContainersSelectionType</label>
+      <label title="多托优化资源分配策略&#10;BestfitMaxEmptySizeFirst：优先选剩余空间最大的托盘，适合多托均衡&#10;BestfitMaxWeightUtilFirst：优先装载重量相关的托盘，适合重量限制场景&#10;BestfitMaxVolUtilFirst：优先将体积装到最高，减少托盘数">bestFitContainersSelectionType</label>
       <select id="bestFitType">
         <option value="BestfitMaxEmptySizeFirst">BestfitMaxEmptySizeFirst — 剩余空间最大优先（多托均衡推荐）</option>
         <option value="BestfitMaxWeightUtilFirst">BestfitMaxWeightUtilFirst — 重量利用率最高优先</option>
-        <option value="BestfitMaxVolUtilFirst">BestfitMaxVolUtilFirst — 体积利用率最高优先</option>
-        <option value="BestfitMinContainersFirst">BestfitMinContainersFirst — 最少托盘数优先</option>
-        <option value="BestfitMinCostFirst">BestfitMinCostFirst — 最低运输成本优先</option>
+        <option value="BestfitMaxVolUtilFirst">BestfitMaxVolUtilFirst — 体积利用率最高优先（减少托盘数）</option>
       </select>
     </div>
     <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
@@ -318,7 +316,7 @@
     <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
       <div style="display:flex;align-items:center;gap:6px;padding-top:6px">
         <input type="checkbox" id="isUnitloadFirst" style="width:auto" />
-        <label style="margin:0" title="true=待单个托盘排满后再开下一个，false=同类货物分散到多托上，多托均衡时建议关闭">忪E载满再开新托 isUnitloadFirst</label>
+        <label style="margin:0" title="true=待单个托盘装满后再开下一个；false=同类货物均衡分散到多个托盘">装满再开新托 isUnitloadFirst</label>
       </div>
       <div style="display:flex;align-items:center;gap:6px;padding-top:6px">
         <input type="checkbox" id="isSpreadIdentical" checked style="width:auto" />
@@ -542,12 +540,12 @@
   /* ── per-mode SKU defaults ── */
   var SKU_DEFAULTS = {
     'pallet': [
-      {name:'ET3T-BK-2-EU', dim:'1200x800x1310', weight:'25', qty:'11', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3T-BK-1-EU', dim:'1200x800x1310', weight:'25', qty:'11', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3T-WH-1-EU', dim:'1200x800x1310', weight:'25', qty:'1',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3T-WH-2-EU', dim:'1200x800x1310', weight:'25', qty:'1',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3-BK-EU',    dim:'1200x800x1800', weight:'34', qty:'24', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3-PRO-SL',   dim:'1200x800x1800', weight:'33', qty:'24', orient:'OrientationsAll', maxL:'0', opt:false, pal:false}
+      {name:'ET3-PRO-SL',   dim:'1150x260x200', weight:'33.2', qty:'24', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET3T-WH-1-EU', dim:'810x375x195',  weight:'30',   qty:'1',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET3T-WH-2-EU', dim:'830x185x175',  weight:'21.3', qty:'1',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET3-BK-EU',    dim:'1145x250x205', weight:'34.5', qty:'24', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET3T-BK-1-EU', dim:'810x375x195',  weight:'30',   qty:'11', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET3T-BK-2-EU', dim:'830x185x175',  weight:'21.3', qty:'11', orient:'OrientationsAll', maxL:'0', opt:false, pal:false}
     ],
     'pallet2ctn': [
       {name:'ET110G-16070-SW42', dim:'1165x215x170', weight:'42',     qty:'6',   orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
@@ -1376,14 +1374,14 @@
   /* ── button events ── */
   $('btnCreate').addEventListener('click', function(){
     setBusy(true);
-    fetchApi('/api/loads','POST',buildPayload(),handleResponse);
+    fetchApi('/cubemaster/api/loads','POST',buildPayload(),handleResponse);
   });
 
   $('btnGet').addEventListener('click', function(){
     setBusy(true);
     var lid=$('loadId').value.trim();
     var lim=parseInt($('limit').value,10)||1;
-    var path = lid ? '/api/loads/'+encodeURIComponent(lid) : '/api/loads?limit='+lim;
+    var path = lid ? '/cubemaster/api/loads/'+encodeURIComponent(lid) : '/cubemaster/api/loads?limit='+lim;
     fetchApi(path,'GET',null,handleResponse);
   });
 

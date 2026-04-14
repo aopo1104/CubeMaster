@@ -1,0 +1,13 @@
+{
+  "name": "cubemaster",
+  "version": "1.0.0",
+  "description": "CubeMaster API integration helper",
+  "type": "module",
+  "scripts": {
+    "start": "node local_proxy.js",
+    "cli": "node cube_master.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

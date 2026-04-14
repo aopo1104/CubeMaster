@@ -38,7 +38,7 @@ For a product-based palletization flow, these are the core abilities you need:
 Before running from browser, start local proxy backend:
 
 ```bash
-D:/python/python.exe local_proxy.py
+node local_proxy.js
 ```
 
 Then open:
@@ -52,7 +52,7 @@ The page will call `/api/*` endpoints on local proxy and proxy will call CubeMas
 ## Step 1: Validate token
 
 ```bash
-python 1.py check-token --token <YOUR_TOKEN>
+node cube_master.js check-token --token <YOUR_TOKEN>
 ```
 
 Expected: `HTTP 200`.
@@ -65,7 +65,7 @@ Browser equivalent:
 ## Step 2: Read existing load results
 
 ```bash
-python 1.py list-loads --token <YOUR_TOKEN> --limit 1
+node cube_master.js list-loads --token <YOUR_TOKEN> --limit 1
 ```
 
 Use this output to understand result schema in your account.
@@ -75,7 +75,7 @@ Use this output to understand result schema in your account.
 Prepare JSON payload (example in `sample_load_request.json`) and call:
 
 ```bash
-python 1.py create-load --token <YOUR_TOKEN> --payload-file sample_load_request.json
+node cube_master.js create-load --token <YOUR_TOKEN> --payload-file sample_load_request.json
 ```
 
 Expected:
@@ -85,13 +85,13 @@ Expected:
 ## Step 4: Query one load result
 
 ```bash
-python 1.py get-load --token <YOUR_TOKEN> --load-id <LOAD_ID>
+node cube_master.js get-load --token <YOUR_TOKEN> --load-id <LOAD_ID>
 ```
 
 If your tenant does not support this path, use list API:
 
 ```bash
-python 1.py list-loads --token <YOUR_TOKEN> --limit 10
+node cube_master.js list-loads --token <YOUR_TOKEN> --limit 10
 ```
 
 ## Step 5: Render result in UI
