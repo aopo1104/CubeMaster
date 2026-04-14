@@ -1,0 +1,43 @@
+{
+  "document": {
+    "title": "API Product Palletization Demo",
+    "description": "Created from integration template",
+    "containerType": "Truck",
+    "calculationType": "MixLoad"
+  },
+  "containers": [
+    {
+      "name": "53FT-DryVan",
+      "qty": 1,
+      "length": 16154,
+      "width": 2489,
+      "height": 2794,
+      "maxWeight": 30000
+    }
+  ],
+  "cargoes": [
+    {
+      "name": "SKU-001",
+      "description": "Sample carton",
+      "length": 920,
+      "width": 920,
+      "height": 760,
+      "weight": 6,
+      "qty": 68,
+      "isPalletized": true
+    },
+    {
+      "name": "SKU-002",
+      "description": "Sample carton B",
+      "length": 450,
+      "width": 300,
+      "height": 280,
+      "weight": 2.5,
+      "qty": 120,
+      "isPalletized": false
+    }
+  ],
+  "rules": {
+    "maxWeight": 30000
+  }
+}
