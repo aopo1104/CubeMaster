@@ -206,8 +206,8 @@
     <div class="section-title">计算模式</div>
     <div class="mode-tabs">
       <button class="mode-tab active" id="tab-pallet"    onclick="setCalcMode('pallet')">&#x1F4E6; 托盘装载</button>
-      <button class="mode-tab"        id="tab-direct"    onclick="setCalcMode('direct')">&#x1F69A; 直装柜</button>
-      <button class="mode-tab"        id="tab-pallet2ctn" onclick="setCalcMode('pallet2ctn')">&#x1F4E6;&#x279C;&#x1F69A; 先托后柜</button>
+      <button class="mode-tab"        id="tab-direct"    onclick="setCalcMode('direct')">&#x1F69A; 直装柜(未完成)</button>
+      <button class="mode-tab"        id="tab-pallet2ctn" onclick="setCalcMode('pallet2ctn')">&#x1F4E6;&#x279C;&#x1F69A; 先托后柜(未完成)</button>
     </div>
     <input type="hidden" id="calcMode" value="pallet" />
     <div class="mode-info" id="modeInfo">货物直接装进托盘，托盘就是容器。</div>
@@ -443,9 +443,8 @@
   </div>
 
   <div id="vizCard">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <div style="margin-bottom:8px">
       <div class="viz-title" id="vizTitle" style="margin:0">3D 装载可视化 — 托盘装载</div>
-      <a id="vizReportLink" href="#" target="_blank" style="display:none;font-size:11px;color:#3b82f6;padding:3px 8px;border:1px solid #3b82f6;border-radius:4px;text-decoration:none;white-space:nowrap">📊 查看官方3D报告 ↗</a>
     </div>
     <canvas id="vizCanvas"></canvas>
     <div class="viz-hint" id="vizHint">鼠标左键拖拽旋转 · 滚轮缩放 · 右键平移</div>
@@ -1251,19 +1250,6 @@
   }
 
   function drawViz(fc) {
-    /* show official report link if available */
-    var rLinks = (fc && fc.reportLinks) || {};
-    var link = $('vizReportLink');
-    if (link) {
-      if (rLinks.overview) {
-        link.href = rLinks.overview;
-        link.style.display = '';
-      } else {
-        link.style.display = 'none';
-        link.href = '#';
-      }
-    }
-
     /* always render Three.js estimation */
     if (!window.THREE) return;
     if (!fc) return;
