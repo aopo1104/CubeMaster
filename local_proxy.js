@@ -144,8 +144,20 @@ const server = createServer(async (req, res) => {
 
       if (pathname === '/cubemaster/api/loads') {
         const token = pickToken();
+        const upstreamParams = {
+          UOM: 'UnitMetric',
+          placementsCreated: 'true',
+        };
+        if (query.get('graphicsCreated') === 'true') {
+          upstreamParams.graphicsCreated     = 'true';
+          upstreamParams.graphicsImageWidth  = query.get('graphicsImageWidth')  || '800';
+          upstreamParams.graphicsImageDepth  = query.get('graphicsImageDepth')  || '600';
+        }
+        if (query.get('spacesCreated') === 'true') {
+          upstreamParams.spacesCreated = 'true';
+        }
         const { status, body } = await forward('POST', '/Loads', token, {
-          params: { graphicsCreated: 'true', graphicsImageWidth: '800', graphicsImageDepth: '600', UOM: 'UnitMetric', spacesCreated: 'true', placementsCreated: 'true' },
+          params: upstreamParams,
           payload
         });
         sendJson(res, status, body);

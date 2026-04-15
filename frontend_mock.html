@@ -370,6 +370,23 @@
     </div>
   </div>
 
+  <div class="section">
+    <div class="section-title">API 输出选项</div>
+    <div style="margin-bottom:8px;padding:6px 8px;border-radius:6px;background:#1e3a5f;border:1px solid #2d5a8e;font-size:11px;color:#93c5fd;line-height:1.6">
+      ⚡ SKU 过多时建议关闭图片和 3D 模型生成，可显著加快响应速度
+    </div>
+    <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <div style="display:flex;align-items:center;gap:6px;padding-top:4px">
+        <input type="checkbox" id="chkGraphics" style="width:auto" />
+        <label style="margin:0" title="graphicsCreated：API 生成 2D/3D 装载图片">生成装载图片</label>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;padding-top:4px">
+        <input type="checkbox" id="chkSpaces" style="width:auto" />
+        <label style="margin:0" title="spacesCreated：返回精确货物坐标（用于本地 3D 可视化）">返回 3D 坐标</label>
+      </div>
+    </div>
+  </div>
+
   <div class="btn-row">
     <button class="btn btn-amber" id="btnCreate">发起计算 (POST /Loads)</button>
   </div>
@@ -1447,7 +1464,10 @@
   /* ── button events ── */
   $('btnCreate').addEventListener('click', function(){
     setBusy(true);
-    fetchApi('/cubemaster/api/loads','POST',buildPayload(),handleResponse);
+    var qs = 'UOM=UnitMetric&placementsCreated=true';
+    if ($('chkGraphics') && $('chkGraphics').checked) qs += '&graphicsCreated=true&graphicsImageWidth=800&graphicsImageDepth=600';
+    if ($('chkSpaces')   && $('chkSpaces').checked)   qs += '&spacesCreated=true';
+    fetchApi('/cubemaster/api/loads?'+qs,'POST',buildPayload(),handleResponse);
   });
 
   /* ── sku row management ── */
