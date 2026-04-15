@@ -71,11 +71,15 @@
       text-align: left; border-bottom: 1px solid var(--sidebar-line);
     }
     .sku-table td { border-bottom: 1px solid var(--sidebar-line); padding: 4px 0; }
+    .sku-table tbody tr { background: rgba(255,255,255,.03); }
+    .sku-table tbody tr:nth-child(even) { background: rgba(255,255,255,.06); }
+    .sku-table tbody tr:hover { background: var(--sidebar-sec); }
     .sku-table td input {
       border: none; border-radius: 4px; background: transparent;
       padding: 3px 4px; color: #d0dae8; font-size: 12px; width: 100%;
     }
     .sku-table td input:focus { background: var(--sidebar-sec); border: 1px solid var(--sidebar-line); }
+    .sku-table td select { background: var(--sidebar); color: #d0dae8; border: none; font-size: 11px; width: 100%; }
     .btn-row { padding: 14px 18px 0; display: flex; flex-direction: column; gap: 8px; }
     .btn {
       width: 100%; padding: 10px 14px; border: none; border-radius: 10px;
@@ -137,9 +141,6 @@
     /* tables */
     .table-card { background: var(--card-bg); border: 1px solid var(--line); border-radius: 12px; }
     .table-scroll { overflow-x: auto; overflow-y: auto; max-height: 420px; }
-    #wManifest .table-scroll { display: flex; flex-direction: column; }
-    #wManifest .table-scroll table { flex: 1; }
-    #wManifest .table-scroll tfoot tr { position: sticky; bottom: 0; z-index: 2; box-shadow: 0 -2px 6px rgba(0,0,0,0.07); }
     .table-head { padding: 12px 16px 8px; font-size: 13px; font-weight: 700; color: var(--ink); border-bottom: 1px solid var(--line); background: #fafbfc; cursor: pointer; user-select: none; }
     table { width: 100%; border-collapse: collapse; font-size: 13px; }
     th { padding: 8px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); background: #fafbfc; border-bottom: 1px solid var(--line); }
@@ -182,6 +183,14 @@
 
     .empty-state { text-align: center; padding: 28px; color: var(--muted); font-size: 13px; }
     #stamp { font-size: 11px; color: var(--muted); text-align: right; margin-top: 2px; }
+    #apiImgCard { background: var(--card-bg); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+    #apiImgCard .img-card-title { font-size: 13px; font-weight: 600; color: #c9d4e2; margin-bottom: 10px; }
+    .api-img-block { margin-bottom: 14px; }
+    .api-img-block .img-label { font-size: 11px; color: var(--muted); margin-bottom: 5px; }
+    .api-img-row { display: flex; gap: 6px; flex-wrap: wrap; }
+    .api-img-row img { border-radius: 6px; border: 1px solid var(--line); background: #0d1520; cursor: pointer; transition: opacity .15s; height: 140px; object-fit: contain; }
+    .api-img-row img:hover { opacity: .85; }
+    .api-img-row img.img-3d { height: 180px; }
   </style>
 </head>
 <body>
@@ -408,7 +417,29 @@
           <tr><td colspan="6"><div class="empty-state">暂无数据</div></td></tr>
         </tbody>
       </table>
-    </div></div>
+    </div>
+    <!-- 官方装载图 + 货物清单：点击容器行后展示 -->
+    <div id="ctnDetail" style="display:none;border-top:1px solid var(--line);padding:14px 16px 4px">
+      <div style="margin-bottom:12px">
+        <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line)">货物清单 (Manifest)</div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr><th>#</th><th>SKU</th><th>描述</th><th>L&times;W&times;H(mm)</th><th>单重(kg)</th><th>数量</th><th>小计重量(kg)</th><th>小计体积(m³)</th><th>托盘化</th></tr>
+            </thead>
+            <tbody id="manifestRows">
+              <tr><td colspan="9"><div class="empty-state">暂无数据</div></td></tr>
+            </tbody>
+            <tfoot id="manifestFoot"></tfoot>
+          </table>
+        </div>
+      </div>
+      <div id="apiImgCard" style="margin-top:12px">
+        <div class="img-card-title">&#128247; 官方装载图</div>
+        <div id="apiImgBody"><div class="empty-state">暂无图片数据</div></div>
+      </div>
+    </div>
+    </div>
   </div>
 
   <div id="vizCard">
@@ -417,24 +448,11 @@
       <a id="vizReportLink" href="#" target="_blank" style="display:none;font-size:11px;color:#3b82f6;padding:3px 8px;border:1px solid #3b82f6;border-radius:4px;text-decoration:none;white-space:nowrap">📊 查看官方3D报告 ↗</a>
     </div>
     <canvas id="vizCanvas"></canvas>
-    <div class="viz-hint" id="vizHint">鼠标左键拖拽旋转 · 滚轮缩放 · 右键平移（下方为估算布局，点击右上角按鈕可查看官方真实摩放坐标）</div>
+    <div class="viz-hint" id="vizHint">鼠标左键拖拽旋转 · 滚轮缩放 · 右键平移</div>
     <div id="stamp">—</div>
   </div>
 
-  <div class="table-card">
-    <div class="table-head" id="hManifest">货物清单 (Manifest) &#9660;</div>
-    <div id="wManifest"><div class="table-scroll">
-      <table>
-        <thead>
-          <tr><th>#</th><th>SKU</th><th>描述</th><th>L&times;W&times;H(mm)</th><th>单重(kg)</th><th>数量</th><th>小计重量(kg)</th><th>小计体积(m³)</th><th>托盘化</th></tr>
-        </thead>
-        <tbody id="manifestRows">
-          <tr><td colspan="9"><div class="empty-state">暂无数据</div></td></tr>
-        </tbody>
-        <tfoot id="manifestFoot"></tfoot>
-      </table>
-    </div></div>
-  </div>
+
 
   <div class="table-card">
     <div class="table-head" id="hRaw">原始 JSON 响应 &#9660;</div>
@@ -573,7 +591,7 @@
       +'<td><input value="'+(d.h||'')+'" style="width:100%"/></td>'
       +'<td><input value="'+d.weight+'"/></td>'
       +'<td><input value="'+d.qty+'"/></td>'
-      +'<td><select class="orientSel" style="background:transparent;color:#d0dae8;border:none;font-size:11px;width:100%">'
+      +'<td><select class="orientSel">'
       +'<option value="OrientationsAll"'+(d.orient==='OrientationsAll'?' selected':'')+'>All</option>'
       +'<option value="Orientations12"'+(d.orient==='Orientations12'?' selected':'')+'>12方向</option>'
       +'<option value="Orientations2"'+(d.orient==='Orientations2'?' selected':'')+'>2方向</option>'
@@ -908,7 +926,11 @@
     var topM = new THREE.Mesh(new THREE.PlaneGeometry(cL, cW), wallMat.clone());
     topM.name='ctnTop'; topM.rotation.x=Math.PI/2; topM.position.set(cL/2, cH, cW/2); _3d.scene.add(topM);
 
-    placeCargo(cargoes, 0, cL, cW, cH);
+    if (fc.spaces && fc.spaces.length) {
+      placeCargoFromSpaces(fc.spaces, 0);
+    } else {
+      placeCargo(cargoes, 0, cL, cW, cH);
+    }
 
     var dist = Math.max(cL, cW, cH) * 1.85;
     _3d.camera.position.set(cL*0.7, cH*1.3, dist);
@@ -960,7 +982,11 @@
     bndL.name='ctnWire'; bndL.position.set(cL/2, palletH + stackH/2, cW/2);
     _3d.scene.add(bndL);
 
-    placeCargo(cargoes, palletH, cL, cW, stackH);
+    if (fc.spaces && fc.spaces.length) {
+      placeCargoFromSpaces(fc.spaces, palletH);
+    } else {
+      placeCargo(cargoes, palletH, cL, cW, stackH);
+    }
 
     /* bird-eye-ish camera */
     var dist = Math.max(cL, cW) * 3.5;
@@ -968,6 +994,38 @@
     _3d.camera.lookAt(cL/2, cH/2, cW/2);
     _3d.controls.target.set(cL/2, cH/2, cW/2);
     _3d.controls.update();
+  }
+
+  /* ── place cargo from API spaces (exact coordinates) ── */
+  function placeCargoFromSpaces(spaces, baseY) {
+    var S = 100;
+    var gap = 0.015;
+    var edgeMat = new THREE.LineBasicMaterial({color:0xffffff, transparent:true, opacity:0.20});
+    for (var si = 0; si < spaces.length; si++) {
+      var sp = spaces[si];
+      var cargo = sp.cargo || {};
+      var hexStr = (cargo.colorHexaCode || '').replace('#','');
+      var col = (hexStr.length === 6) ? parseInt(hexStr, 16) : (cargo.color || P3[si % P3.length]);
+      var placements = sp.placements || [];
+      for (var pi = 0; pi < placements.length; pi++) {
+        var pl = placements[pi];
+        var sL = Math.max(0.02, (pl.size.length || cargo.length || 100) / S - gap);
+        var sW = Math.max(0.02, (pl.size.width  || cargo.width  || 100) / S - gap);
+        var sH = Math.max(0.02, (pl.size.height || cargo.height || 100) / S - gap);
+        var x  = pl.pos.length / S + sL / 2 + gap / 2;
+        var y  = baseY + pl.pos.height / S + sH / 2 + gap / 2;
+        var z  = pl.pos.width  / S + sW / 2 + gap / 2;
+        var geo = new THREE.BoxGeometry(sL, sH, sW);
+        var mat = new THREE.MeshPhongMaterial({color:col, transparent:true, opacity:0.88, shininess:70});
+        var mesh = new THREE.Mesh(geo, mat);
+        mesh.position.set(x, y, z);
+        mesh.castShadow = true; mesh.receiveShadow = true;
+        _3d.cargoGroup.add(mesh);
+        var edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat);
+        edges.position.copy(mesh.position);
+        _3d.cargoGroup.add(edges);
+      }
+    }
   }
 
   /* ── shared cargo placement — floor-first BLD ──
@@ -1283,6 +1341,9 @@
     renderManifest(containers[0] || null);
 
     setText('stamp', '更新时间: '+new Date().toLocaleString());
+
+    // 默认选中第一行，展示图片+清单
+    if (containers.length) selectContainer(0);
   }
 
   function renderManifest(fc) {
@@ -1347,6 +1408,34 @@
     drawViz(fc);
     renderManifest(fc);
     setText('stamp', '更新时间: '+new Date().toLocaleString());
+
+    // 展示该容器的官方图片
+    var ctnDetail = $('ctnDetail');
+    ctnDetail.style.display = '';
+    var imgBody = $('apiImgBody');
+    var imgs = fc.graphics && fc.graphics.images;
+    if (imgs) {
+      var imgHtml = '<div class="api-img-row">';
+      var views = [
+        {key:'path3DDiagram', label:'3D'},
+        {key:'path2DFront',   label:'前'},
+        {key:'path2DRear',    label:'后'},
+        {key:'path2DLeft',    label:'左'},
+        {key:'path2DRight',   label:'右'},
+        {key:'path2DTop',     label:'顶'},
+        {key:'path2DBottom',  label:'底'}
+      ];
+      for (var vi=0; vi<views.length; vi++) {
+        var v = views[vi];
+        if (!imgs[v.key]) continue;
+        var cls = (v.key==='path3DDiagram') ? 'img-3d' : '';
+        imgHtml += '<img src="'+imgs[v.key]+'" class="'+cls+'" title="'+v.label+'" onclick="window.open(this.src,\'_blank\')" alt="'+v.label+'"/>';
+      }
+      imgHtml += '</div>';
+      imgBody.innerHTML = imgHtml;
+    } else {
+      imgBody.innerHTML = '<div class="empty-state">暂无图片</div>';
+    }
   }
   window.selectContainer = selectContainer;
 
@@ -1389,6 +1478,18 @@
   }
 
   $('btnAddSku').addEventListener('click', function(){ addSkuRow(); });
+
+  /* ── excel dropdown toggle ── */
+  $('ddExcel').querySelector('.dd-arrow').addEventListener('click', function(e) {
+    e.stopPropagation();
+    $('ddExcel').classList.toggle('open');
+  });
+  $('ddExcel').querySelector('.dd-main').addEventListener('click', function() {
+    $('excelFileInput').click();
+  });
+  document.addEventListener('click', function(e) {
+    if (!$('ddExcel').contains(e.target)) $('ddExcel').classList.remove('open');
+  });
 
   /* ── excel upload / download ── */
   $('btnDownloadTpl').addEventListener('click', function(){
@@ -1435,7 +1536,6 @@
     });
   }
   makeToggle('hContainer','wContainer');
-  makeToggle('hManifest','wManifest');
   makeToggle('hRaw','wRaw');
 
   /* initialise to pallet mode */

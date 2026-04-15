@@ -144,7 +144,10 @@ const server = createServer(async (req, res) => {
 
       if (pathname === '/cubemaster/api/loads') {
         const token = pickToken();
-        const { status, body } = await forward('POST', '/Loads', token, { payload });
+        const { status, body } = await forward('POST', '/Loads', token, {
+          params: { graphicsCreated: 'true', graphicsImageWidth: '800', graphicsImageDepth: '600', UOM: 'UnitMetric', spacesCreated: 'true', placementsCreated: 'true' },
+          payload
+        });
         sendJson(res, status, body);
         return;
       }
