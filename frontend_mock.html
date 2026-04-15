@@ -169,14 +169,6 @@
   </div>
 
   <div class="section">
-    <div class="section-title">连接</div>
-    <div class="field">
-      <label>代理地址</label>
-      <input id="baseUrl" value="http://127.0.0.1:3001" />
-    </div>
-  </div>
-
-  <div class="section">
     <div class="section-title">计算模式</div>
     <div class="mode-tabs">
       <button class="mode-tab active" id="tab-pallet"    onclick="setCalcMode('pallet')">&#x1F4E6; 托盘装载</button>
@@ -702,8 +694,6 @@
     setText('statusText', text);
   }
 
-  var FIXED_TOKEN = '7816ff6f-fb30-43fe-8d35-d753d6225192';
-
   function setBusy(busy) {
     $('btnCreate').disabled = $('btnGet').disabled = busy;
     if (busy) setStatus('请求中…', 'loading');
@@ -805,9 +795,8 @@
 
   /* ── fetch ── */
   function fetchApi(path, method, body, cb) {
-    var base  = $('baseUrl').value.trim().replace(/\/$/,'');
-    var token = FIXED_TOKEN;
-    var opts = { method: method||'GET', headers: {'X-TokenID': token} };
+    var base  = window.location.origin;
+    var opts = { method: method||'GET', headers: {} };
     if (body) { opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
     fetch(base+path, opts).then(function(res) {
       var s=res.status, ct=res.headers.get('content-type')||'';

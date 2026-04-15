@@ -4,8 +4,9 @@ import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
 const BASE_API = 'https://api.cubemaster.net';
-const HOST = '127.0.0.1';
+const HOST = '0.0.0.0';
 const PORT = 3001;
+const SERVER_TOKEN = process.env.CUBEMASTER_TOKEN;
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const WEB_FILE = resolve(__dirname, 'frontend_mock.html');
 
@@ -15,12 +16,8 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 };
 
-function pickToken(query, body, headers) {
-  return query.get('token')
-    || (body && body.token ? String(body.token) : '')
-    || headers['x-tokenid']
-    || process.env.CUBEMASTER_TOKEN
-    || '';
+function pickToken() {
+  return SERVER_TOKEN;
 }
 
 async function forward(method, path, token, { params, payload } = {}) {
@@ -114,7 +111,7 @@ const server = createServer(async (req, res) => {
       }
 
       if (pathname === '/cubemaster/api/check-token' || pathname === '/cubemaster/api/loads') {
-        const token = pickToken(query, null, req.headers);
+        const token = pickToken();
         const limit = parseInt(query.get('limit') || '1', 10);
         const { status, body } = await forward('GET', '/Loads', token, { params: { limit } });
         sendJson(res, status, body);
@@ -122,7 +119,7 @@ const server = createServer(async (req, res) => {
       }
 
       if (pathname.startsWith('/cubemaster/api/loads/')) {
-        const token = pickToken(query, null, req.headers);
+        const token = pickToken();
         const loadId = pathname.slice('/cubemaster/api/loads/'.length);
         const { status, body } = await forward('GET', `/Loads/${loadId}`, token);
         sendJson(res, status, body);
@@ -143,7 +140,7 @@ const server = createServer(async (req, res) => {
       }
 
       if (pathname === '/cubemaster/api/loads') {
-        const token = pickToken(query, payload, req.headers);
+        const token = pickToken();
         const { status, body } = await forward('POST', '/Loads', token, { payload });
         sendJson(res, status, body);
         return;
