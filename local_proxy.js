@@ -39,6 +39,8 @@ async function forward(method, path, token, { params, payload } = {}) {
   if (payload !== undefined) {
     init.headers['Content-Type'] = 'application/json';
     init.body = JSON.stringify(payload);
+    console.log('[→ CubeMaster Request]', url);
+    console.log(JSON.stringify(payload, null, 2));
   }
   const resp = await fetch(url, init);
   const contentType = resp.headers.get('content-type') || '';
@@ -67,6 +69,7 @@ function sendHtml(res, html) {
   res.writeHead(200, {
     'Content-Type': 'text/html; charset=utf-8',
     'Content-Length': body.length,
+    'Cache-Control': 'no-store',
   });
   res.end(body);
 }

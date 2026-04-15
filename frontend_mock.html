@@ -6,6 +6,7 @@
   <title>CubeMaster 装托计划</title>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
   <style>
     :root {
       --bg: #f0f2f5;
@@ -155,6 +156,30 @@
     .bar-wrap { background: #e9ecef; border-radius: 4px; height: 8px; overflow: hidden; width: 80px; display: inline-block; vertical-align: middle; }
     .bar-fill { height: 100%; border-radius: 4px; background: var(--brand); transition: width .5s ease; }
 
+    /* dropdown */
+    .btn-dropdown { position: relative; display: inline-flex; }
+    .btn-dropdown .dd-main { border-radius: 10px 0 0 10px; }
+    .btn-dropdown .dd-arrow {
+      border-radius: 0 10px 10px 0; border-left: 1px solid rgba(255,255,255,.25);
+      padding: 6px 7px; font-size: 11px; cursor: pointer;
+      background: #1d4ed8; color: #fff; border-top: none; border-bottom: none; border-right: none;
+    }
+    .btn-dropdown .dd-arrow:hover { opacity: .85; }
+    .btn-dropdown .dd-menu {
+      display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 100;
+      background: #1a2332; border: 1px solid #2e3f58; border-radius: 8px;
+      min-width: 160px; padding: 4px 0; box-shadow: 0 4px 12px rgba(0,0,0,.4);
+    }
+    .btn-dropdown.open .dd-menu { display: block; }
+    .btn-dropdown .dd-menu button,
+    .btn-dropdown .dd-menu label {
+      display: block; width: 100%; padding: 8px 14px; font-size: 12px; font-weight: 600;
+      color: #c9d4e2; background: transparent; border: none; cursor: pointer; text-align: left;
+      white-space: nowrap;
+    }
+    .btn-dropdown .dd-menu button:hover,
+    .btn-dropdown .dd-menu label:hover { background: rgba(255,255,255,.07); color: #fff; }
+
     .empty-state { text-align: center; padding: 28px; color: var(--muted); font-size: 13px; }
     #stamp { font-size: 11px; color: var(--muted); text-align: right; margin-top: 2px; }
   </style>
@@ -267,7 +292,7 @@
     </div>
     <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
       <div><label>优先级 priority</label><input id="ctnPriority" value="0" /></div>
-      <div id="vehicleTypeRow"><label>车辆类型 vehicleType</label>
+      <div id="vehicleTypeRow" style="display:none"><label>车辆类型 vehicleType</label>
         <select id="vehicleType">
           <option value="Dry">Dry 普通</option>
           <option value="Refrigerated">Refrigerated 冷藏</option>
@@ -279,31 +304,14 @@
 
   <div class="section">
     <div class="section-title">计算规则 rules</div>
-    <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <div><label title="计算时全局最大运输重量约束，不超过容器承重上限">规则重量上限 rules.maxWeight(kg)</label><input id="rulesMaxWeight" value="800" /></div>
-      <div><label title="计算时全局最大装载体积比例，不超过容器体积上限">规则体积上限 rules.maxVolPercent(%)</label><input id="rulesMaxVolPct" value="100" /></div>
-    </div>
-    <div class="field">
-      <label>计算超时 calculationTime(秒，0=不限)</label>
-      <input id="calcTime" value="0" />
-    </div>
     <div class="field">
       <label title="多托优化资源分配策略&#10;BestfitMaxEmptySizeFirst：优先选剩余空间最大的托盘，适合多托均衡&#10;BestfitMaxWeightUtilFirst：优先装载重量相关的托盘，适合重量限制场景&#10;BestfitMaxVolUtilFirst：优先将体积装到最高，减少托盘数">bestFitContainersSelectionType</label>
       <select id="bestFitType">
         <option value="BestfitMaxEmptySizeFirst">BestfitMaxEmptySizeFirst — 剩余空间最大优先（多托均衡推荐）</option>
         <option value="BestfitMaxWeightUtilFirst">BestfitMaxWeightUtilFirst — 重量利用率最高优先</option>
         <option value="BestfitMaxVolUtilFirst">BestfitMaxVolUtilFirst — 体积利用率最高优先（减少托盘数）</option>
+        <option value="BestfitMaxLoadVolFirst">BestfitMaxLoadVolFirst — 最大装载体积优先</option>
       </select>
-    </div>
-    <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <div style="display:flex;align-items:center;gap:6px;padding-top:6px">
-        <input type="checkbox" id="allowStacking" checked style="width:auto" />
-        <label style="margin:0" title="允许货物垂直叠放">允许叠放 allowStacking</label>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;padding-top:6px">
-        <input type="checkbox" id="allowRotation" checked style="width:auto" />
-        <label style="margin:0" title="允许货物旋转摆放">允许旋转 allowRotation</label>
-      </div>
     </div>
     <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
       <div style="display:flex;align-items:center;gap:6px;padding-top:6px">
@@ -318,42 +326,43 @@
   </div>
 
   <div class="section">
-    <div class="section-title">查询 GET</div>
-    <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <div><label>查询条数 limit</label><input id="limit" value="1" /></div>
-      <div><label>Load ID（指定查询）</label><input id="loadId" placeholder="留空取最新" /></div>
-    </div>
-  </div>
-
-  <div class="section">
     <div class="section-title">货物清单 cargoes</div>
     <div style="overflow-x:auto">
-    <table class="sku-table" style="min-width:520px">
+    <table class="sku-table" style="min-width:680px">
       <thead>
         <tr>
-          <th style="width:16%">SKU</th>
-          <th style="width:22%">L&times;W&times;H(mm)</th>
-          <th style="width:9%">kg</th>
-          <th style="width:8%">数量</th>
-          <th style="width:18%">orientationsAllowed</th>
-          <th style="width:10%">叠放层数</th>
-          <th style="width:9%">可选品</th>
-          <th style="width:8%">托盘化</th>
+          <th style="width:14%">SKU</th>
+          <th style="width:8%">L(mm)</th>
+          <th style="width:8%">W(mm)</th>
+          <th style="width:8%">H(mm)</th>
+          <th style="width:7%">kg</th>
+          <th style="width:6%">数量</th>
+          <th style="width:15%">orientationsAllowed</th>
+          <th style="width:7%">叠放层数</th>
+          <th style="width:7%">可选品</th>
+          <th style="width:6%">托盘化</th>
+          <th style="width:4%"></th>
         </tr>
       </thead>
       <tbody id="skuBody">
       </tbody>
     </table>
     </div>
-    <div style="margin-top:8px;display:flex;gap:6px">
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;align-items:center">
       <button class="btn btn-blue" id="btnAddSku" style="padding:6px 8px;font-size:12px">+ 增加行</button>
-      <button class="btn" id="btnRemSku" style="padding:6px 8px;font-size:12px;background:#374151;color:#fff">&#8722; 删末行</button>
+      <div class="btn-dropdown" id="ddExcel">
+        <button class="btn dd-main" style="padding:6px 10px;font-size:12px;background:#1d4ed8;color:#fff">↑ Excel</button>
+        <button class="dd-arrow">&#9660;</button>
+        <div class="dd-menu">
+          <label style="text-align:center">&#128194; 上传 Excel<input type="file" id="excelFileInput" accept=".xlsx,.xls,.csv" style="display:none"/></label>
+          <button id="btnDownloadTpl">&#11015; 下载模板</button>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="btn-row">
-    <button class="btn btn-amber" id="btnCreate">① 发起计算 (POST /Loads)</button>
-    <button class="btn btn-blue"  id="btnGet">② 查询结果 (GET /Loads)</button>
+    <button class="btn btn-amber" id="btnCreate">发起计算 (POST /Loads)</button>
   </div>
 </aside>
 
@@ -362,7 +371,7 @@
 
   <div id="statusBar">
     <div class="spinner"></div>
-    <span id="statusText">就绪。点击 ① 发起计算 或 ② 查询结果。</span>
+    <span id="statusText">就绪，请填写货物信息后点击发起计算。</span>
   </div>
 
   <div class="metric-row">
@@ -494,7 +503,6 @@
         $('ctnWidth').value       = list[i].width;
         $('ctnHeight').value      = list[i].height;
         $('maxWeight').value      = list[i].maxWeight;
-        $('rulesMaxWeight').value = list[i].maxWeight;
         $('ctnEmptyWeight').value = list[i].empty;
         if ($('vehicleType')) $('vehicleType').value = list[i].vtype;
         break;
@@ -532,25 +540,25 @@
   /* ── per-mode SKU defaults ── */
   var SKU_DEFAULTS = {
     'pallet': [
-      {name:'ET3-PRO-SL',   dim:'1150x260x200', weight:'33.2', qty:'24', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3T-WH-1-EU', dim:'810x375x195',  weight:'30',   qty:'1',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3T-WH-2-EU', dim:'830x185x175',  weight:'21.3', qty:'1',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3-BK-EU',    dim:'1145x250x205', weight:'34.5', qty:'24', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3T-BK-1-EU', dim:'810x375x195',  weight:'30',   qty:'11', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3T-BK-2-EU', dim:'830x185x175',  weight:'21.3', qty:'11', orient:'OrientationsAll', maxL:'0', opt:false, pal:false}
+      {name:'ET3-PRO-SL',   l:'1150', w:'260', h:'200', weight:'33.2', qty:'24', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET3T-WH-1-EU', l:'810',  w:'375', h:'195', weight:'30',   qty:'1',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET3T-WH-2-EU', l:'830',  w:'185', h:'175', weight:'21.3', qty:'1',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET3-BK-EU',    l:'1145', w:'250', h:'205', weight:'34.5', qty:'24', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET3T-BK-1-EU', l:'810',  w:'375', h:'195', weight:'30',   qty:'11', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET3T-BK-2-EU', l:'830',  w:'185', h:'175', weight:'21.3', qty:'11', orient:'OrientationsAll', maxL:'0', opt:false, pal:false}
     ],
     'pallet2ctn': [
-      {name:'ET110G-16070-SW42', dim:'1165x215x170', weight:'42',     qty:'6',   orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-16070-SW42', dim:'1165x215x170', weight:'42',     qty:'6',   orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-16070-SW42', dim:'1165x215x170', weight:'42',     qty:'6',   orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-14070-SW42', dim:'1165x215x175', weight:'36',     qty:'42',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-12070-SW42', dim:'1165x215x175', weight:'34',     qty:'12',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-12070-SW42', dim:'1165x215x175', weight:'36',     qty:'18',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-12070-SW42', dim:'1165x215x175', weight:'34',     qty:'12',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-12070-SW42', dim:'1165x215x175', weight:'34',     qty:'36',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'MT026-6836-SW42',   dim:'725x420x157',  weight:'12.786', qty:'636', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'MT026-6836-SW42',   dim:'725x420x157',  weight:'12.786', qty:'72',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'MT026-6836-SW42',   dim:'725x420x157',  weight:'12.786', qty:'168', orient:'OrientationsAll', maxL:'0', opt:false, pal:false}
+      {name:'ET110G-16070-SW42', l:'1165', w:'215', h:'170', weight:'42',     qty:'6',   orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET110G-16070-SW42', l:'1165', w:'215', h:'170', weight:'42',     qty:'6',   orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET110G-16070-SW42', l:'1165', w:'215', h:'170', weight:'42',     qty:'6',   orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET110G-14070-SW42', l:'1165', w:'215', h:'175', weight:'36',     qty:'42',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET110G-12070-SW42', l:'1165', w:'215', h:'175', weight:'34',     qty:'12',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET110G-12070-SW42', l:'1165', w:'215', h:'175', weight:'36',     qty:'18',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET110G-12070-SW42', l:'1165', w:'215', h:'175', weight:'34',     qty:'12',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'ET110G-12070-SW42', l:'1165', w:'215', h:'175', weight:'34',     qty:'36',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'MT026-6836-SW42',   l:'725',  w:'420', h:'157', weight:'12.786', qty:'636', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'MT026-6836-SW42',   l:'725',  w:'420', h:'157', weight:'12.786', qty:'72',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
+      {name:'MT026-6836-SW42',   l:'725',  w:'420', h:'157', weight:'12.786', qty:'168', orient:'OrientationsAll', maxL:'0', opt:false, pal:false}
     ]
   };
   SKU_DEFAULTS['direct'] = SKU_DEFAULTS['pallet2ctn']; /* 直装柜共用先托后柜数据 */
@@ -560,7 +568,9 @@
 
   function skuRowHtml(d) {
     return '<td><input value="'+d.name+'"/></td>'
-      +'<td><input value="'+d.dim+'"/></td>'
+      +'<td><input value="'+(d.l||'')+'" style="width:100%"/></td>'
+      +'<td><input value="'+(d.w||'')+'" style="width:100%"/></td>'
+      +'<td><input value="'+(d.h||'')+'" style="width:100%"/></td>'
       +'<td><input value="'+d.weight+'"/></td>'
       +'<td><input value="'+d.qty+'"/></td>'
       +'<td><select class="orientSel" style="background:transparent;color:#d0dae8;border:none;font-size:11px;width:100%">'
@@ -571,7 +581,8 @@
       +'</select></td>'
       +'<td><input value="'+d.maxL+'" title="maxLayersOnOrientation1，0=不限"/></td>'
       +'<td><input type="checkbox" style="width:auto" title="isOptional"'+(d.opt?' checked':'')+'/></td>'
-      +'<td><input type="checkbox" style="width:auto" title="isPalletized"'+(d.pal?' checked':'')+'/></td>';
+      +'<td><input type="checkbox" style="width:auto" title="isPalletized"'+(d.pal?' checked':'')+'/></td>'
+      +'<td style="text-align:center"><button onclick="this.closest(\'tr\').remove()" style="background:transparent;border:none;color:#ef4444;font-size:14px;cursor:pointer;padding:0 4px">×</button></td>';
   }
 
   function saveSkuCache(mode) {
@@ -580,16 +591,18 @@
     var saved = [];
     for (var ri=0; ri<rows.length; ri++) {
       var inp = rows[ri].querySelectorAll('input, select');
-      if (inp.length < 6) continue;
+      if (inp.length < 8) continue;
       saved.push({
         name:   inp[0].value,
-        dim:    inp[1].value,
-        weight: inp[2].value,
-        qty:    inp[3].value,
-        orient: inp[4].value,
-        maxL:   inp[5].value,
-        opt:    inp[6] ? inp[6].checked : false,
-        pal:    inp[7] ? inp[7].checked : false
+        l:      inp[1].value,
+        w:      inp[2].value,
+        h:      inp[3].value,
+        weight: inp[4].value,
+        qty:    inp[5].value,
+        orient: inp[6].value,
+        maxL:   inp[7].value,
+        opt:    inp[8] ? inp[8].checked : false,
+        pal:    inp[9] ? inp[9].checked : false
       });
     }
     _skuCache[mode] = saved;
@@ -657,9 +670,8 @@
 
     /* 重量默认值 */
     if (mode === 'pallet') {
-      var mwEl = $('maxWeight'), rwEl = $('rulesMaxWeight');
+      var mwEl = $('maxWeight');
       if (mwEl) mwEl.value = '800';
-      if (rwEl) rwEl.value = '800';
     } else {
       onModelChange();
     }
@@ -695,7 +707,7 @@
   }
 
   function setBusy(busy) {
-    $('btnCreate').disabled = $('btnGet').disabled = busy;
+    $('btnCreate').disabled = busy;
     if (busy) setStatus('请求中…', 'loading');
   }
 
@@ -724,18 +736,18 @@
     for (var i=0; i<rows.length; i++) {
       var inp = rows[i].querySelectorAll('input');
       if (!inp[0] || !inp[0].value.trim()) continue;
-      var d = inp[1].value.replace(/[xX\xd7\s]/g,'x').split('x');
       var orientSel       = rows[i].querySelector('.orientSel');
-      var maxLayerInp     = inp[5];
+      var maxLayerInp     = inp[6];
       var isOptionalChk   = rows[i].querySelectorAll('input[type=checkbox]')[0];
       var isPalletizedChk = rows[i].querySelectorAll('input[type=checkbox]')[1];
 
       var forcePalletized = (mode === 'pallet2ctn');
       var cargoObj = {
+        style:  'Shipcase',
         name:   inp[0].value.trim(),
-        length: parseFloat(d[0])||0, width: parseFloat(d[1])||0, height: parseFloat(d[2])||0,
-        weight: parseFloat(inp[2].value)||0,
-        qty:    parseInt(inp[3].value,10)||0,
+        length: parseFloat(inp[1].value)||0, width: parseFloat(inp[2].value)||0, height: parseFloat(inp[3].value)||0,
+        weight: parseFloat(inp[4].value)||0,
+        qty:    parseInt(inp[5].value,10)||0,
         orientationsAllowed:      orientSel ? orientSel.value : 'OrientationsAll',
         maxLayersOnOrientation1:  parseInt(maxLayerInp ? maxLayerInp.value : '0', 10)||0,
         isOptional:   isOptionalChk   ? isOptionalChk.checked    : false,
@@ -754,16 +766,18 @@
       cargoes.push(cargoObj);
     }
 
-    var mw      = parseFloat($('maxWeight').value)      || (mode==='pallet' ? 800 : 30000);
-    var rulesMw = parseFloat($('rulesMaxWeight').value) || mw;
-    var volPct  = parseFloat($('rulesMaxVolPct').value) || 100;
-    var calcT   = parseInt($('calcTime').value, 10)     || 0;
+    var mw = parseFloat($('maxWeight').value) || (mode==='pallet' ? 800 : 30000);
+
+    /* containerType: pallet mode→Pallet, pallet2ctn→outer category, direct→containerCategory */
+    var ctnType = (mode === 'pallet') ? 'Pallet'
+                : (mode === 'pallet2ctn') ? (($('outerCatSelect') && $('outerCatSelect').value) || 'Truck')
+                : ($('containerCategory') ? $('containerCategory').value : 'Truck');
 
     return {
       document: {
         title:           $('docTitle').value.trim() || 'API装托计划',
         description:     $('docDesc').value.trim(),
-        containerType:   $('containerCategory').value,
+        containerType:   ctnType,
         calculationType: $('calcType').value
       },
       containers: [{
@@ -774,21 +788,16 @@
         width:         parseFloat($('ctnWidth').value)||2489,
         height:        parseFloat($('ctnHeight').value)||2794,
         emptyWeight:   parseFloat($('ctnEmptyWeight').value)||0,
-        maxVolPercent: parseFloat($('rulesMaxVolPct').value)||100,
+        maxVolPercent: 100,
         priority:      parseInt($('ctnPriority').value,10)||0,
         vehicleType:   $('vehicleType') ? $('vehicleType').value : 'Dry'
       }],
       cargoes: cargoes,
       rules: {
-        maxWeight:     rulesMw,
-        maxVolPercent: volPct,
-        isWeightLimited: true,
-        allowStacking: $('allowStacking').checked,
-        allowRotation: $('allowRotation').checked,
-        isUnitloadFirst: $('isUnitloadFirst').checked,
+        isWeightLimited:               true,
+        isUnitloadFirst:               $('isUnitloadFirst').checked,
         isSpreadIdenticalCargoAllowed: $('isSpreadIdentical').checked,
-        bestFitContainersSelectionType: $('bestFitType').value,
-        calculationTime: calcT > 0 ? calcT : undefined
+        bestFitContainersSelectionType: $('bestFitType').value
       }
     };
   }
@@ -1366,37 +1375,55 @@
     fetchApi('/cubemaster/api/loads','POST',buildPayload(),handleResponse);
   });
 
-  $('btnGet').addEventListener('click', function(){
-    setBusy(true);
-    var lid=$('loadId').value.trim();
-    var lim=parseInt($('limit').value,10)||1;
-    var path = lid ? '/cubemaster/api/loads/'+encodeURIComponent(lid) : '/cubemaster/api/loads?limit='+lim;
-    fetchApi(path,'GET',null,handleResponse);
-  });
-
   /* ── sku row management ── */
-  $('btnAddSku').addEventListener('click', function(){
-    var tr=document.createElement('tr');
-    tr.innerHTML='<td><input value=""/></td>'
-      +'<td><input value=""/></td>'
-      +'<td><input value=""/></td>'
-      +'<td><input value=""/></td>'
-      +'<td><select class="orientSel" style="background:transparent;color:#d0dae8;border:none;font-size:11px;width:100%">'
-      +'<option value="OrientationsAll">All</option>'
-      +'<option value="Orientations12">12方向</option>'
-      +'<option value="Orientations2">2方向</option>'
-      +'<option value="Orientation1">固定</option>'
-      +'</select></td>'
-      +'<td><input value="0"/></td>'
-      +'<td><input type="checkbox" style="width:auto"/></td>'
-      +'<td><input type="checkbox" style="width:auto"/></td>';
+  function addSkuRow(sku, l, w, h, kg, qty, orient, maxL, opt, pal) {
+    var d = {
+      name: sku||'', l: l||'', w: w||'', h: h||'',
+      weight: kg||'', qty: qty||'',
+      orient: orient||'OrientationsAll', maxL: maxL||'0',
+      opt: !!opt, pal: !!pal
+    };
+    var tr = document.createElement('tr');
+    tr.innerHTML = skuRowHtml(d);
     $('skuBody').appendChild(tr);
+  }
+
+  $('btnAddSku').addEventListener('click', function(){ addSkuRow(); });
+
+  /* ── excel upload / download ── */
+  $('btnDownloadTpl').addEventListener('click', function(){
+    var ws = XLSX.utils.aoa_to_sheet([['SKU','L(mm)','W(mm)','H(mm)','kg','数量'],['ET3-PRO-SL',1150,260,200,33.2,24],['ET3-BK-EU',1145,250,205,34.5,24]]);
+    var wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Template');
+    XLSX.writeFile(wb, 'cubemaster_template.xlsx');
+  });
+  $('excelFileInput').addEventListener('change', function(ev){
+    var file = ev.target.files[0]; if (!file) return;
+    parseExcelFile(file);
   });
 
-  $('btnRemSku').addEventListener('click', function(){
-    var rows=$('skuBody').querySelectorAll('tr');
-    if (rows.length>1) $('skuBody').removeChild(rows[rows.length-1]);
-  });
+  function parseExcelFile(file) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      try {
+        var wb = XLSX.read(e.target.result, {type:'array'});
+        var ws = wb.Sheets[wb.SheetNames[0]];
+        var data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+        if (!data || data.length < 2) { alert('Excel 内容为空或格式错误'); return; }
+        $('skuBody').innerHTML = '';
+        var count = 0;
+        for (var r=1; r<data.length; r++) {
+          var row = data[r];
+          var sku = String(row[0]||'').trim(); if (!sku) continue;
+          addSkuRow(sku, parseFloat(row[1])||'', parseFloat(row[2])||'', parseFloat(row[3])||'', parseFloat(row[4])||'', parseInt(row[5],10)||'');
+          count++;
+        }
+        $('excelFileInput').value = '';
+        setStatus('已导入 '+count+' 行货物', 'ok');
+      } catch(err) { alert('解析失败: '+err.message); }
+    };
+    reader.readAsArrayBuffer(file);
+  }
 
   /* ── collapsible sections ── */
   function makeToggle(headId, wrapId) {
