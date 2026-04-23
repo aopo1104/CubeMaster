@@ -4,194 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CubeMaster 装托计划</title>
+  <base href="/cubemaster/" />
+  <link rel="stylesheet" href="css/styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <style>
-    :root {
-      --bg: #f0f2f5;
-      --sidebar: #1a2332;
-      --sidebar-sec: #243044;
-      --sidebar-line: #2e3f58;
-      --ink: #1f2a2e;
-      --muted: #7a8898;
-      --line: #e2e8ef;
-      --brand: #0f766e;
-      --amber: #d97706;
-      --blue: #1e6eb5;
-      --green-bg: #ecfdf5;
-      --green-border: #6ee7b7;
-      --green-text: #065f46;
-      --red-bg: #fef2f2;
-      --red-border: #fca5a5;
-      --red-text: #991b1b;
-      --card-bg: #ffffff;
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      display: flex; height: 100vh; overflow: hidden;
-      font-family: "Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
-      background: var(--bg); font-size: 14px;
-    }
-
-    /* sidebar */
-    aside {
-      width: 320px; min-width: 320px; background: var(--sidebar);
-      color: #c9d4e2; display: flex; flex-direction: column;
-      overflow-y: auto; padding-bottom: 16px;
-    }
-    .sidebar-header { padding: 20px 18px 14px; border-bottom: 1px solid var(--sidebar-line); }
-    .sidebar-header h1 { font-size: 18px; color: #fff; font-weight: 700; }
-    .sidebar-header p  { font-size: 11px; color: var(--muted); margin-top: 4px; }
-    .section { padding: 14px 18px 10px; border-bottom: 1px solid var(--sidebar-line); }
-    .section-title {
-      font-size: 11px; font-weight: 700; text-transform: uppercase;
-      letter-spacing: 0.8px; color: var(--muted); margin-bottom: 10px;
-    }
-    .field { margin-bottom: 10px; }
-    .field label { display: block; font-size: 11px; color: #9fafc0; margin-bottom: 4px; }
-    .field input,.field select,.field textarea {
-      width: 100%; background: var(--sidebar-sec); border: 1px solid var(--sidebar-line);
-      border-radius: 8px; padding: 8px 10px; color: #e8edf4; font-size: 13px; outline: none;
-    }
-    .field input::placeholder { color: #4a5e78; }
-    .field input:focus,.field select:focus { border-color: #4e8ecb; background: #1f2e44; }
-    .field select option { background: var(--sidebar); }
-    .token-wrap { display: flex; gap: 6px; }
-    .token-wrap input { flex: 1; }
-    .tok-eye {
-      background: var(--sidebar-sec); border: 1px solid var(--sidebar-line);
-      border-radius: 8px; width: 36px; cursor: pointer; color: var(--muted);
-      font-size: 13px; flex-shrink: 0;
-    }
-    .tok-eye:hover { color: #e8edf4; }
-    .sku-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .sku-table th {
-      color: var(--muted); font-weight: 600; padding: 4px 4px 6px;
-      text-align: left; border-bottom: 1px solid var(--sidebar-line);
-    }
-    .sku-table td { border-bottom: 1px solid var(--sidebar-line); padding: 4px 0; }
-    .sku-table tbody tr { background: rgba(255,255,255,.03); }
-    .sku-table tbody tr:nth-child(even) { background: rgba(255,255,255,.06); }
-    .sku-table tbody tr:hover { background: var(--sidebar-sec); }
-    .sku-table td input {
-      border: none; border-radius: 4px; background: transparent;
-      padding: 3px 4px; color: #d0dae8; font-size: 12px; width: 100%;
-    }
-    .sku-table td input:focus { background: var(--sidebar-sec); border: 1px solid var(--sidebar-line); }
-    .sku-table td select { background: var(--sidebar); color: #d0dae8; border: none; font-size: 11px; width: 100%; }
-    .btn-row { padding: 14px 18px 0; display: flex; flex-direction: column; gap: 8px; }
-    .btn {
-      width: 100%; padding: 10px 14px; border: none; border-radius: 10px;
-      cursor: pointer; font-size: 13px; font-weight: 600; letter-spacing: 0.2px;
-      transition: opacity .15s, transform .1s;
-    }
-    .btn:hover:not(:disabled) { opacity: .88; transform: translateY(-1px); }
-    .btn:disabled { opacity: .4; cursor: not-allowed; }
-    .btn-primary { background: var(--brand); color: #fff; }
-    .btn-amber   { background: var(--amber); color: #fff; }
-    .btn-blue    { background: var(--blue);  color: #fff; }
-
-    /* main */
-    main { flex: 1; overflow-y: auto; padding: 18px 22px 32px; display: flex; flex-direction: column; gap: 16px; }
-
-    /* status bar */
-    #statusBar {
-      padding: 11px 14px; border-radius: 10px; font-size: 13px; font-weight: 600;
-      background: var(--card-bg); border: 1px solid var(--line); color: var(--muted);
-      display: flex; align-items: center; gap: 10px;
-      transition: background .3s, color .3s, border-color .3s;
-    }
-    #statusBar.ok    { background: var(--green-bg); border-color: var(--green-border); color: var(--green-text); }
-    #statusBar.error { background: var(--red-bg);   border-color: var(--red-border);   color: var(--red-text); }
-    .spinner {
-      width: 14px; height: 14px; border: 2px solid #ccc; border-top-color: var(--brand);
-      border-radius: 50%; animation: spin .7s linear infinite; flex-shrink: 0; display: none;
-    }
-    #statusBar.loading .spinner { display: block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
-    /* metric cards */
-    .metric-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .metric-card {
-      background: var(--card-bg); border: 1px solid var(--line);
-      border-radius: 12px; padding: 14px 16px;
-    }
-    .metric-card.flash { animation: flash-anim .7s ease; }
-    @keyframes flash-anim {
-      0%  { background: #cffafe; border-color: #67e8f9; }
-      100%{ background: var(--card-bg); border-color: var(--line); }
-    }
-    .metric-card .k { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
-    .metric-card .v { font-size: 28px; font-weight: 800; color: var(--ink); line-height: 1; }
-    .metric-card .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
-
-    /* viz */
-    #vizCard { background: var(--card-bg); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
-    #vizCard .viz-title { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
-    #vizCanvas { width: 100%; height: 320px; display: block; border-radius: 8px; border: 1px solid var(--line); background: #0f172a; cursor: grab; }
-    #vizCanvas:active { cursor: grabbing; }
-    .viz-hint { font-size: 11px; color: var(--muted); margin-top: 5px; text-align: center; }
-    .mode-tabs { display:flex; gap:4px; margin-top:4px; }
-    .mode-tab { flex:1; padding:7px 3px; font-size:11px; font-weight:600; border:1px solid var(--sidebar-line); background:transparent; color:#94a3b8; border-radius:6px; cursor:pointer; transition:background .15s,color .15s; }
-    .mode-tab:hover { color:#cbd5e1; background:rgba(255,255,255,.06); }
-    .mode-tab.active { background:var(--brand); color:#fff; border-color:var(--brand); }
-    .mode-info { margin-top:6px; padding:5px 8px; border-radius:6px; background:#1e3a5f; border:1px solid #2d5a8e; font-size:11px; color:#93c5fd; line-height:1.5; }
-
-    /* tables */
-    .table-card { background: var(--card-bg); border: 1px solid var(--line); border-radius: 12px; }
-    .table-scroll { overflow-x: auto; overflow-y: auto; max-height: 420px; }
-    .table-head { padding: 12px 16px 8px; font-size: 13px; font-weight: 700; color: var(--ink); border-bottom: 1px solid var(--line); background: #fafbfc; cursor: pointer; user-select: none; }
-    table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    th { padding: 8px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); background: #fafbfc; border-bottom: 1px solid var(--line); }
-    td { padding: 9px 14px; border-bottom: 1px solid var(--line); color: var(--ink); }
-    tr:last-child td { border-bottom: none; }
-    tr:hover td { background: #f7f9fb; }
-    .ctn-row-sel td { background: #e8f4fd !important; outline: 2px solid #3b82f6; outline-offset: -2px; }
-    #containerRows tr { cursor: pointer; }
-
-    .tag { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
-    .tag-green { background: var(--green-bg); color: var(--green-text); border: 1px solid var(--green-border); }
-    .tag-gray  { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
-
-    .bar-wrap { background: #e9ecef; border-radius: 4px; height: 8px; overflow: hidden; width: 80px; display: inline-block; vertical-align: middle; }
-    .bar-fill { height: 100%; border-radius: 4px; background: var(--brand); transition: width .5s ease; }
-
-    /* dropdown */
-    .btn-dropdown { position: relative; display: inline-flex; }
-    .btn-dropdown .dd-main { border-radius: 10px 0 0 10px; }
-    .btn-dropdown .dd-arrow {
-      border-radius: 0 10px 10px 0; border-left: 1px solid rgba(255,255,255,.25);
-      padding: 6px 7px; font-size: 11px; cursor: pointer;
-      background: #1d4ed8; color: #fff; border-top: none; border-bottom: none; border-right: none;
-    }
-    .btn-dropdown .dd-arrow:hover { opacity: .85; }
-    .btn-dropdown .dd-menu {
-      display: none; position: absolute; top: calc(100% + 4px); left: 0; z-index: 100;
-      background: #1a2332; border: 1px solid #2e3f58; border-radius: 8px;
-      min-width: 160px; padding: 4px 0; box-shadow: 0 4px 12px rgba(0,0,0,.4);
-    }
-    .btn-dropdown.open .dd-menu { display: block; }
-    .btn-dropdown .dd-menu button,
-    .btn-dropdown .dd-menu label {
-      display: block; width: 100%; padding: 8px 14px; font-size: 12px; font-weight: 600;
-      color: #c9d4e2; background: transparent; border: none; cursor: pointer; text-align: left;
-      white-space: nowrap;
-    }
-    .btn-dropdown .dd-menu button:hover,
-    .btn-dropdown .dd-menu label:hover { background: rgba(255,255,255,.07); color: #fff; }
-
-    .empty-state { text-align: center; padding: 28px; color: var(--muted); font-size: 13px; }
-    #stamp { font-size: 11px; color: var(--muted); text-align: right; margin-top: 2px; }
-    #apiImgCard { background: var(--card-bg); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
-    #apiImgCard .img-card-title { font-size: 13px; font-weight: 600; color: #c9d4e2; margin-bottom: 10px; }
-    .api-img-block { margin-bottom: 14px; }
-    .api-img-block .img-label { font-size: 11px; color: var(--muted); margin-bottom: 5px; }
-    .api-img-row { display: flex; gap: 6px; flex-wrap: wrap; }
-    .api-img-row img { border-radius: 6px; border: 1px solid var(--line); background: #0d1520; cursor: pointer; transition: opacity .15s; height: 140px; object-fit: contain; }
-    .api-img-row img:hover { opacity: .85; }
-    .api-img-row img.img-3d { height: 180px; }
-  </style>
 </head>
 <body>
 
@@ -206,8 +23,8 @@
     <div class="section-title">计算模式</div>
     <div class="mode-tabs">
       <button class="mode-tab active" id="tab-pallet"    onclick="setCalcMode('pallet')">&#x1F4E6; 托盘装载</button>
-      <button class="mode-tab"        id="tab-direct"    onclick="setCalcMode('direct')">&#x1F69A; 直装柜(未完成)</button>
-      <button class="mode-tab"        id="tab-pallet2ctn" onclick="setCalcMode('pallet2ctn')">&#x1F4E6;&#x279C;&#x1F69A; 先托后柜(未完成)</button>
+      <button class="mode-tab"        id="tab-direct"    onclick="setCalcMode('direct')">&#x1F69A; 直装柜</button>
+      <button class="mode-tab"        id="tab-pallet2ctn" onclick="setCalcMode('pallet2ctn')">&#x1F4E6;&#x279C;&#x1F69A; 先托后柜</button>
     </div>
     <input type="hidden" id="calcMode" value="pallet" />
     <div class="mode-info" id="modeInfo">货物直接装进托盘，托盘就是容器。</div>
@@ -244,19 +61,30 @@
 
   <!-- 内层托盘规格（先托后柜专用，默认隐藏） -->
   <div class="section" id="secPalletInner" style="display:none">
-    <div class="section-title" style="color:#93c5fd">📦 内层托盘规格</div>
-    <div class="field" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
-      <div><label title="托盘底板长度">长 length(mm)</label><input id="plt_length" value="1220" /></div>
-      <div><label title="托盘底板宽度">宽 width(mm)</label><input id="plt_width" value="820" /></div>
-      <div><label title="托盘底板厚度">板厚 thickness(mm)</label><input id="plt_thickness" value="150" /></div>
+    <div class="section-title" style="color:#93c5fd">📦 内层托盘规格（支持多种托盘）</div>
+    <div style="overflow-x:auto;margin-bottom:6px">
+      <table id="palletTypeTable" style="width:100%;border-collapse:collapse;font-size:11px;white-space:nowrap">
+        <thead>
+          <tr style="background:#0f2a4a;color:#93c5fd;text-align:center">
+            <th style="padding:3px 2px">☑</th>
+            <th style="padding:3px 4px;text-align:left">预设</th>
+            <th style="padding:3px 4px;text-align:left">标识名</th>
+            <th style="padding:3px 2px">L(mm)</th>
+            <th style="padding:3px 2px">W(mm)</th>
+            <th style="padding:3px 2px">板厚</th>
+            <th style="padding:3px 2px" title="含超托的最大码长">maxL</th>
+            <th style="padding:3px 2px" title="含超托的最大码宽">maxW</th>
+            <th style="padding:3px 2px" title="含托盘板厚的总堆高上限">maxH⚠️</th>
+            <th style="padding:3px 2px" title="含托盘自重的承重上限">maxWt</th>
+            <th style="padding:3px 2px" title="托盘自重">自重</th>
+            <th style="padding:3px 2px" title="该托盘类型最多使用数量">数量</th>
+            <th style="padding:3px 2px"></th>
+          </tr>
+        </thead>
+        <tbody id="palletTypeBody"></tbody>
+      </table>
     </div>
-    <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <div><label title="托盘面至最高货物顶的总限高">最大堆高 maxH(mm)</label><input id="plt_maxHeight" value="1800" /></div>
-      <div><label title="含托盘自重在内的增大承重">承重上限 kg</label><input id="plt_maxWeight" value="800" /></div>
-    </div>
-    <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
-      <div><label title="托盘自身重量">自重 emptyWeight(kg)</label><input id="plt_emptyWeight" value="25" /></div>
-    </div>
+    <button class="btn btn-blue" onclick="addPalletTypeRow()" style="padding:4px 8px;font-size:12px;margin-bottom:8px">+ 添加托盘类型</button>
     <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
       <div style="display:flex;align-items:center;gap:6px;padding-top:4px">
         <input type="checkbox" id="plt_partialAllowed" checked style="width:auto" />
@@ -265,6 +93,46 @@
       <div style="display:flex;align-items:center;gap:6px;padding-top:4px">
         <input type="checkbox" id="plt_mixPallet" checked style="width:auto" />
         <label style="margin:0" title="剩余散件可混放同一托盘">剩余散件混托</label>
+      </div>
+    </div>
+    <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+      <div>
+        <label title="柜内托盘可叠放的最大层数">最大叠托层数</label>
+        <select id="maxStackLayers">
+          <option value="1">1层 (不叠托)</option>
+          <option value="2" selected>2层</option>
+          <option value="3">3层</option>
+        </select>
+      </div>
+      <div>
+        <label title="自动寻优的评价标准">优化目标</label>
+        <select id="optimGoal">
+          <option value="maxPieces" selected>整柜装载量最大</option>
+          <option value="maxVolUtil">空间利用率优先</option>
+          <option value="maxWtUtil">重量利用率优先</option>
+          <option value="minContainers">柜数最少</option>
+        </select>
+      </div>
+    </div>
+    <!-- 装托算法参数 -->
+    <div class="field" style="border-top:1px solid #1e3a5f;margin-top:10px;padding-top:10px">
+      <div style="font-size:11px;font-weight:600;color:#93c5fd;margin-bottom:8px">⚙️ 装托算法参数（Step 1 rules）</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div>
+          <label title="algorithmType: Normal=标准算法；Optimization=深度寻优，耗时更长但通常可减少托盘数">算法类型 algorithmType</label>
+          <select id="plt_algorithmType">
+            <option value="Optimization" selected>Optimization 深度寻优</option>
+            <option value="Normal">Normal 标准</option>
+          </select>
+        </div>
+        <div>
+          <label title="optimizationLevel: 1~4，值越大寻优越深入（推荐 4 以减少托数）">优化深度 optimizationLevel</label>
+          <input id="plt_optimLevel" type="number" value="4" min="1" max="4" />
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;padding-top:6px">
+        <input type="checkbox" id="plt_spreadIdenticalPallet" checked style="width:auto" />
+        <label style="margin:0" title="允许相同SKU分散到不同托盘(spaces)，提升空间利用率、减少总托数">同SKU可分散 isSpreadIdenticalCargoAllowed</label>
       </div>
     </div>
   </div>
@@ -276,7 +144,7 @@
       <label title="选择实际运输容器类型（货车或集装箱）">外部容器类型</label>
       <select id="outerCatSelect" onchange="onOuterCatChange()">
         <option value="Truck">🚚 Truck 货车</option>
-        <option value="Container">Container 集装箱</option>
+        <option value="Container" selected>📦 Container 集装箱</option>
       </select>
     </div>
     <div class="field">
@@ -324,11 +192,11 @@
     </div>
     <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
       <div style="display:flex;align-items:center;gap:6px;padding-top:6px">
-        <input type="checkbox" id="isUnitloadFirst" style="width:auto" />
+        <input type="checkbox" id="isUnitloadFirst" checked style="width:auto" />
         <label style="margin:0" title="true=待单个托盘装满后再开下一个；false=同类货物均衡分散到多个托盘">装满再开新托 isUnitloadFirst</label>
       </div>
       <div style="display:flex;align-items:center;gap:6px;padding-top:6px">
-        <input type="checkbox" id="isSpreadIdentical" checked style="width:auto" />
+        <input type="checkbox" id="isSpreadIdentical" style="width:auto" />
         <label style="margin:0" title="true=允许同一SKU分散到多个托盘，false=尝试集中放入同一托盘">同SKU分散 isSpreadIdenticalCargoAllowed</label>
       </div>
     </div>
@@ -340,17 +208,20 @@
     <table class="sku-table" style="min-width:680px">
       <thead>
         <tr>
-          <th style="width:14%">SKU</th>
-          <th style="width:8%">L(mm)</th>
-          <th style="width:8%">W(mm)</th>
-          <th style="width:8%">H(mm)</th>
-          <th style="width:7%">kg</th>
-          <th style="width:6%">数量</th>
-          <th style="width:15%">orientationsAllowed</th>
-          <th style="width:7%">叠放层数</th>
-          <th style="width:7%">可选品</th>
-          <th style="width:6%">托盘化</th>
-          <th style="width:4%"></th>
+          <th style="width:12%">SKU</th>
+          <th style="width:7%">L(mm)</th>
+          <th style="width:7%">W(mm)</th>
+          <th style="width:7%">H(mm)</th>
+          <th style="width:6%">kg</th>
+          <th style="width:4%">数量</th>
+          <th style="width:12%">orientationsAllowed</th>
+          <th style="width:5%">叠放层数</th>
+          <th style="width:4%">超托</th>
+          <th style="width:5%">超托L(mm)</th>
+          <th style="width:5%">超托W(mm)</th>
+          <th style="width:5%">可选品</th>
+          <th style="width:5%">托盘化</th>
+          <th style="width:3%"></th>
         </tr>
       </thead>
       <tbody id="skuBody">
@@ -423,6 +294,26 @@
     </div>
   </div>
 
+  <!-- 方案对比表(先托后柜寻优，默认隐藏) -->
+  <div class="table-card" id="comparisonCard" style="display:none">
+    <div class="table-head" id="hComparison">&#x1F4CA; 方案对比 — 先托后柜多方案寻优 &#9660;</div>
+    <div id="wComparison">
+      <div id="compProgress" style="display:none;padding:10px 16px;font-size:12px;color:var(--muted)">
+        <span class="spinner" style="display:inline-block;vertical-align:middle;margin-right:6px"></span>
+        <span id="compProgressText">正在计算…</span>
+      </div>
+      <div class="table-scroll" style="max-height:360px">
+        <table>
+          <thead>
+            <tr><th></th><th>方案</th><th>限托高mm</th><th>总件数</th><th>残货</th><th>柜数</th><th>体积利用率</th><th>重量利用率</th><th>状态</th></tr>
+          </thead>
+          <tbody id="comparisonRows">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
   <div class="table-card">
     <div class="table-head" id="hContainer">容器明细（点击行切换视图）&#9660;</div>
     <div id="wContainer"><div class="table-scroll">
@@ -437,6 +328,25 @@
     </div>
     <!-- 官方装载图 + 货物清单：点击容器行后展示 -->
     <div id="ctnDetail" style="display:none;border-top:1px solid var(--line);padding:14px 16px 4px">
+
+      <!-- 先托后柜：托盘明细（只在 pallet2ctn 模式下显示） -->
+      <div id="palletDetailSection" style="display:none;margin-bottom:14px">
+        <div class="pallet-detail-header">
+          <span>&#x1F4E6; 托盘明细<span id="palletCountLabel" style="font-weight:400;color:var(--muted);margin-left:6px"></span></span>
+          <button class="btn-back-ctn" onclick="showContainerViz()">&#x2B21; 返回外柜视图</button>
+        </div>
+        <div class="table-scroll" style="max-height:220px">
+          <table>
+            <thead>
+              <tr><th>#</th><th>货物 SKU</th><th>件数</th><th>净重(kg)</th><th>体积(m³)</th><th>编排 L×W×H (总高mm)</th><th>体积利用率</th><th>重量利用率</th></tr>
+            </thead>
+            <tbody id="palletRows">
+              <tr><td colspan="8"><div class="empty-state">暂无数据</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div style="margin-bottom:12px">
         <div style="font-size:12px;font-weight:600;color:var(--muted);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--line)">货物清单 (Manifest)</div>
         <div class="table-scroll">
@@ -471,1083 +381,25 @@
 
 
   <div class="table-card">
-    <div class="table-head" id="hRaw">原始 JSON 响应 &#9660;</div>
+    <div class="table-head" id="hRaw">请求 / 响应 JSON &#9660;</div>
     <div id="wRaw" style="display:none;padding:12px">
-      <textarea id="rawJson" style="width:100%;height:240px;font-family:Consolas,monospace;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical;background:#fafbfc;color:var(--ink)">点击上方按钮后显示…</textarea>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:4px">&#9658; 请求 (Step 1 Request)</div>
+      <textarea id="req1Json" style="width:100%;height:200px;font-family:Consolas,monospace;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical;background:#fafbfc;color:var(--ink)">—</textarea>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-top:10px;margin-bottom:4px">&#9668; 响应 (Step 1 Response)</div>
+      <textarea id="resp1Json" style="width:100%;height:240px;font-family:Consolas,monospace;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical;background:#fafbfc;color:var(--ink)">点击上方按钮后显示…</textarea>
+      <div id="step2JsonSection" style="display:none">
+        <div style="font-size:11px;font-weight:600;color:#93c5fd;margin-top:14px;margin-bottom:4px">&#9658; 装柜请求 (Step 2 Request)</div>
+        <textarea id="req2Json" style="width:100%;height:200px;font-family:Consolas,monospace;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical;background:#fafbfc;color:var(--ink)">—</textarea>
+        <div style="font-size:11px;font-weight:600;color:#93c5fd;margin-top:10px;margin-bottom:4px">&#9668; 装柜响应 (Step 2 Response)</div>
+        <textarea id="resp2Json" style="width:100%;height:240px;font-family:Consolas,monospace;font-size:12px;border:1px solid var(--line);border-radius:8px;padding:10px;resize:vertical;background:#fafbfc;color:var(--ink)">—</textarea>
+      </div>
     </div>
   </div>
 
 </main>
 
-<script>
-(function () {
-  'use strict';
-
-  var PALETTE = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1'];
-  var P3 = [0x3b82f6,0x10b981,0xf59e0b,0xef4444,0x8b5cf6,0xec4899,0x06b6d4,0x84cc16,0xf97316,0x6366f1];
-  var _3d = null;
-  var _lastContainers = [];
-
-  /* ── container presets ── */
-  var PRESETS = {
-    'Truck': [
-      {name:'53FT-DryVan',   length:16154, width:2489, height:2794, maxWeight:30000, empty:0,    vtype:'Dry'},
-      {name:'48FT-DryVan',   length:14630, width:2489, height:2794, maxWeight:30000, empty:0,    vtype:'Dry'},
-      {name:'26FT-BoxTruck', length:7925,  width:2235, height:2235, maxWeight:8000,  empty:0,    vtype:'Dry'}
-    ],
-    'Container': [
-      {name:'40HQ-Container', length:12032, width:2350, height:2694, maxWeight:28230, empty:3900, vtype:'Dry'},
-      {name:'40FT-Container', length:12032, width:2350, height:2395, maxWeight:28230, empty:3900, vtype:'Dry'},
-      {name:'20FT-Container', length:5900,  width:2350, height:2395, maxWeight:28230, empty:2220, vtype:'Dry'}
-    ],
-    'Pallet': [
-      {name:'Standard-Pallet-1200x800', length:1220, width:820, height:1800, maxWeight:900, empty:25, vtype:'Dry'}
-    ]
-  };
-
-  var _lastOuterCat = 'Truck'; /* remember last outer container category */
-
-  function $(id) { return document.getElementById(id); }
-
-  function onCategoryChange() {
-    var cat  = $('containerCategory').value;
-    if (cat !== 'Pallet') _lastOuterCat = cat; /* track last outer choice */
-    var list = PRESETS[cat] || PRESETS['Truck'];
-    var sel  = $('containerType');
-    sel.innerHTML = '';
-    for (var i=0; i<list.length; i++) {
-      var opt = document.createElement('option');
-      opt.value = list[i].name;
-      opt.textContent = list[i].name;
-      sel.appendChild(opt);
-    }
-    onModelChange();
-    var vtRow = $('vehicleTypeRow');
-    if (vtRow) vtRow.style.display = (cat === 'Truck') ? '' : 'none';
-  }
-  window.onCategoryChange = onCategoryChange;
-
-  function onModelChange() {
-    var cat  = $('containerCategory').value;
-    var name = $('containerType').value;
-    var list = PRESETS[cat] || [];
-    for (var i=0; i<list.length; i++) {
-      if (list[i].name === name) {
-        $('ctnLength').value      = list[i].length;
-        $('ctnWidth').value       = list[i].width;
-        $('ctnHeight').value      = list[i].height;
-        $('maxWeight').value      = list[i].maxWeight;
-        $('ctnEmptyWeight').value = list[i].empty;
-        if ($('vehicleType')) $('vehicleType').value = list[i].vtype;
-        break;
-      }
-    }
-  }
-  window.onModelChange = onModelChange;
-
-  function onOuterCatChange() {
-    var ocs = $('outerCatSelect');
-    if (!ocs) return;
-    _lastOuterCat = ocs.value;
-    var catSel = $('containerCategory');
-    if (catSel) { catSel.value = ocs.value; onCategoryChange(); }
-  }
-  window.onOuterCatChange = onOuterCatChange;
-
-  /* ── calcMode switch ── */
-  var MODE_INFO = {
-    'pallet':     '&#x1F4E6; <b>托盘装载</b>：货物直接装入托盘，托盘即容器。设定托盘尺寸与承重。',
-    'direct':     '&#x1F69A; <b>直装柜</b>：货物直接装入货车或集装箱，无托盘中转。选择外部容器类型与型号。',
-    'pallet2ctn': '&#x1F4E6;&#x279C;&#x1F69A; <b>先托后柜</b>：货物先按内层托盘规格码垛，再将托盘装入外部容器。需分别设置托盘与容器尺寸。'
-  };
-  var MODE_CTN_TITLE = {
-    'pallet':     '\ud83d\udce6 托盘规格',
-    'direct':     '\ud83d\ude9a 外部容器规格',
-    'pallet2ctn': '\ud83d\ude9a 外部容器规格（先托后柜）'
-  };
-  var MODE_VIZ_TITLE = {
-    'pallet':     '3D 装载可视化 — 托盘装载',
-    'direct':     '3D 装载可视化 — 直装柜',
-    'pallet2ctn': '3D 装载可视化 — 先托后柜'
-  };
-
-  /* ── per-mode SKU defaults ── */
-  var SKU_DEFAULTS = {
-    'pallet': [
-      {name:'ET3-PRO-SL',   l:'1150', w:'260', h:'200', weight:'33.2', qty:'24', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3T-WH-1-EU', l:'810',  w:'375', h:'195', weight:'30',   qty:'1',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3T-WH-2-EU', l:'830',  w:'185', h:'175', weight:'21.3', qty:'1',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3-BK-EU',    l:'1145', w:'250', h:'205', weight:'34.5', qty:'24', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3T-BK-1-EU', l:'810',  w:'375', h:'195', weight:'30',   qty:'11', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET3T-BK-2-EU', l:'830',  w:'185', h:'175', weight:'21.3', qty:'11', orient:'OrientationsAll', maxL:'0', opt:false, pal:false}
-    ],
-    'pallet2ctn': [
-      {name:'ET110G-16070-SW42', l:'1165', w:'215', h:'170', weight:'42',     qty:'6',   orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-16070-SW42', l:'1165', w:'215', h:'170', weight:'42',     qty:'6',   orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-16070-SW42', l:'1165', w:'215', h:'170', weight:'42',     qty:'6',   orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-14070-SW42', l:'1165', w:'215', h:'175', weight:'36',     qty:'42',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-12070-SW42', l:'1165', w:'215', h:'175', weight:'34',     qty:'12',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-12070-SW42', l:'1165', w:'215', h:'175', weight:'36',     qty:'18',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-12070-SW42', l:'1165', w:'215', h:'175', weight:'34',     qty:'12',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'ET110G-12070-SW42', l:'1165', w:'215', h:'175', weight:'34',     qty:'36',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'MT026-6836-SW42',   l:'725',  w:'420', h:'157', weight:'12.786', qty:'636', orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'MT026-6836-SW42',   l:'725',  w:'420', h:'157', weight:'12.786', qty:'72',  orient:'OrientationsAll', maxL:'0', opt:false, pal:false},
-      {name:'MT026-6836-SW42',   l:'725',  w:'420', h:'157', weight:'12.786', qty:'168', orient:'OrientationsAll', maxL:'0', opt:false, pal:false}
-    ]
-  };
-  SKU_DEFAULTS['direct'] = SKU_DEFAULTS['pallet2ctn']; /* 直装柜共用先托后柜数据 */
-
-  var _skuCache = {}; /* saves user-edited rows per mode */
-  var _prevMode = null;
-
-  function skuRowHtml(d) {
-    return '<td><input value="'+d.name+'"/></td>'
-      +'<td><input value="'+(d.l||'')+'" style="width:100%"/></td>'
-      +'<td><input value="'+(d.w||'')+'" style="width:100%"/></td>'
-      +'<td><input value="'+(d.h||'')+'" style="width:100%"/></td>'
-      +'<td><input value="'+d.weight+'"/></td>'
-      +'<td><input value="'+d.qty+'"/></td>'
-      +'<td><select class="orientSel">'
-      +'<option value="OrientationsAll"'+(d.orient==='OrientationsAll'?' selected':'')+'>All</option>'
-      +'<option value="Orientations12"'+(d.orient==='Orientations12'?' selected':'')+'>12方向</option>'
-      +'<option value="Orientations2"'+(d.orient==='Orientations2'?' selected':'')+'>2方向</option>'
-      +'<option value="Orientation1"'+(d.orient==='Orientation1'?' selected':'')+'>固定</option>'
-      +'</select></td>'
-      +'<td><input value="'+d.maxL+'" title="maxLayersOnOrientation1，0=不限"/></td>'
-      +'<td><input type="checkbox" style="width:auto" title="isOptional"'+(d.opt?' checked':'')+'/></td>'
-      +'<td><input type="checkbox" style="width:auto" title="isPalletized"'+(d.pal?' checked':'')+'/></td>'
-      +'<td style="text-align:center"><button onclick="this.closest(\'tr\').remove()" style="background:transparent;border:none;color:#ef4444;font-size:14px;cursor:pointer;padding:0 4px">×</button></td>';
-  }
-
-  function saveSkuCache(mode) {
-    if (!mode) return;
-    var rows = $('skuBody').querySelectorAll('tr');
-    var saved = [];
-    for (var ri=0; ri<rows.length; ri++) {
-      var inp = rows[ri].querySelectorAll('input, select');
-      if (inp.length < 8) continue;
-      saved.push({
-        name:   inp[0].value,
-        l:      inp[1].value,
-        w:      inp[2].value,
-        h:      inp[3].value,
-        weight: inp[4].value,
-        qty:    inp[5].value,
-        orient: inp[6].value,
-        maxL:   inp[7].value,
-        opt:    inp[8] ? inp[8].checked : false,
-        pal:    inp[9] ? inp[9].checked : false
-      });
-    }
-    _skuCache[mode] = saved;
-  }
-
-  function loadSkuRows(mode) {
-    var data = _skuCache[mode] || SKU_DEFAULTS[mode] || SKU_DEFAULTS['pallet2ctn'];
-    var tbody = $('skuBody');
-    tbody.innerHTML = '';
-    for (var i=0; i<data.length; i++) {
-      var tr = document.createElement('tr');
-      tr.innerHTML = skuRowHtml(data[i]);
-      tbody.appendChild(tr);
-    }
-  }
-
-  function setCalcMode(mode) {
-    /* save current rows before switching */
-    if (_prevMode && _prevMode !== mode) saveSkuCache(_prevMode);
-    /* load rows for new mode */
-    if (_prevMode !== mode) loadSkuRows(mode);
-    _prevMode = mode;
-
-    $('calcMode').value = mode;
-    /* tabs */
-    ['pallet','direct','pallet2ctn'].forEach(function(m) {
-      var t = $('tab-'+m); if (t) t.className = 'mode-tab'+(m===mode?' active':'');
-    });
-    setHtml('modeInfo', MODE_INFO[mode] || '');
-
-    /* 内层托盘规格：仅 pallet2ctn */
-    var sp = $('secPalletInner');
-    if (sp) sp.style.display = (mode==='pallet2ctn') ? '' : 'none';
-
-    /* 外部容器类别行：direct / pallet2ctn */
-    var ocr = $('outerCatRow');
-    if (ocr) ocr.style.display = (mode === 'pallet') ? 'none' : '';
-
-    /* 同步隐藏的 containerCategory（驱动预设联动） */
-    var catSel = $('containerCategory');
-    var ocs    = $('outerCatSelect');
-    if (catSel) {
-      if (mode === 'pallet') {
-        catSel.value = 'Pallet';
-      } else {
-        /* 先托后柜默认使用 Container，直装柜保留上次选择 */
-        var defaultCat = (mode === 'pallet2ctn') ? 'Container' : (_lastOuterCat || 'Truck');
-        var cat = (ocs ? ocs.value : null);
-        /* 只在切换模式时强制重置到默认值，不覆盖用户已手动选择的值 */
-        if (!cat || mode === 'pallet2ctn') cat = defaultCat;
-        catSel.value = cat;
-        if (ocs) ocs.value = cat;
-        _lastOuterCat = cat;
-      }
-      onCategoryChange();
-    }
-
-    /* 车辆类型：托盘模式隐藏 */
-    var vtRow = $('vehicleTypeRow');
-    if (vtRow) vtRow.style.display = (mode === 'pallet') ? 'none' : '';
-
-    /* 标题更新 */
-    var st = $('secCtnTitle'); if (st) st.textContent = MODE_CTN_TITLE[mode];
-    var vt = $('vizTitle');    if (vt) vt.textContent = MODE_VIZ_TITLE[mode];
-
-    /* 重量默认值 */
-    if (mode === 'pallet') {
-      var mwEl = $('maxWeight');
-      if (mwEl) mwEl.value = '800';
-    } else {
-      onModelChange();
-    }
-  }
-  window.setCalcMode = setCalcMode;
-  function setText(id, val) { var el=$(id); if(el) el.textContent = (val===null||val===undefined) ? '—' : String(val); }
-  function setHtml(id, html) { var el=$(id); if(el) el.innerHTML = html; }
-  function e(v) {
-    return String(v===null||v===undefined ? '—' : v)
-      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  }
-  function pct(v) { var n=parseFloat(v); return isNaN(n) ? '—' : n.toFixed(1)+'%'; }
-  function bar(v) {
-    var n = Math.min(100, Math.max(0, parseFloat(v)||0));
-    var color = n >= 100 ? '#ef4444' : n >= 85 ? '#f59e0b' : 'var(--brand)';
-    return '<div class="bar-wrap"><div class="bar-fill" style="width:'+n+'%;background:'+color+'"></div></div>';
-  }
-  function flash(id) {
-    var el=$(id); if(!el) return;
-    el.classList.remove('flash');
-    void el.offsetWidth;
-    el.classList.add('flash');
-  }
-  function safeGet(obj, key) {
-    if (obj && obj[key] !== undefined && obj[key] !== null) return obj[key];
-    return null;
-  }
-  function colorFor(i) { return PALETTE[i % PALETTE.length]; }
-
-  function setStatus(text, mode) {
-    $('statusBar').className = mode || '';
-    setText('statusText', text);
-  }
-
-  function setBusy(busy) {
-    $('btnCreate').disabled = busy;
-    if (busy) setStatus('请求中…', 'loading');
-  }
-
-  /* ── build payload (mode-aware) ── */
-  function buildPayload() {
-    var mode = ($('calcMode') && $('calcMode').value) || 'pallet';
-    var rows = $('skuBody').querySelectorAll('tr'), cargoes = [];
-
-    /* ── pallet spec used by pallet2ctn ── */
-    var palletSpec = null;
-    if (mode === 'pallet2ctn') {
-      var pL  = parseFloat($('plt_length').value)    || 1220;
-      var pW  = parseFloat($('plt_width').value)     || 820;
-      var pTh = parseFloat($('plt_thickness').value) || 150;
-      var pMH = parseFloat($('plt_maxHeight').value) || 1800;
-      palletSpec = {
-        containerType: 'Pallet',
-        name:          'Standard-Pallet',
-        length:        pL, width: pW, height: pTh,
-        maxLength:     pL, maxWidth: pW, maxHeight: pMH,
-        maxWeight:     parseFloat($('plt_maxWeight').value)   || 800,
-        emptyWeight:   parseFloat($('plt_emptyWeight').value) || 25
-      };
-    }
-
-    for (var i=0; i<rows.length; i++) {
-      var inp = rows[i].querySelectorAll('input');
-      if (!inp[0] || !inp[0].value.trim()) continue;
-      var orientSel       = rows[i].querySelector('.orientSel');
-      var maxLayerInp     = inp[6];
-      var isOptionalChk   = rows[i].querySelectorAll('input[type=checkbox]')[0];
-      var isPalletizedChk = rows[i].querySelectorAll('input[type=checkbox]')[1];
-
-      var forcePalletized = (mode === 'pallet2ctn');
-      var cargoObj = {
-        style:  'Shipcase',
-        name:   inp[0].value.trim(),
-        length: parseFloat(inp[1].value)||0, width: parseFloat(inp[2].value)||0, height: parseFloat(inp[3].value)||0,
-        weight: parseFloat(inp[4].value)||0,
-        qty:    parseInt(inp[5].value,10)||0,
-        orientationsAllowed:      orientSel ? orientSel.value : 'OrientationsAll',
-        maxLayersOnOrientation1:  parseInt(maxLayerInp ? maxLayerInp.value : '0', 10)||0,
-        isOptional:   isOptionalChk   ? isOptionalChk.checked    : false,
-        isPalletized: forcePalletized ? true : (isPalletizedChk ? isPalletizedChk.checked : false)
-      };
-
-      if (mode === 'pallet2ctn') {
-        cargoObj.palletizing = {
-          pallet:                palletSpec,
-          flatPalletTop:         true,
-          partialPalletsAllowed: $('plt_partialAllowed').checked,
-          remainQtyToMixPallet:  $('plt_mixPallet').checked,
-          remainQtyToVehicle:    true
-        };
-      }
-      cargoes.push(cargoObj);
-    }
-
-    var mw = parseFloat($('maxWeight').value) || (mode==='pallet' ? 800 : 30000);
-
-    /* containerType: pallet mode→Pallet, pallet2ctn→outer category, direct→containerCategory */
-    var ctnType = (mode === 'pallet') ? 'Pallet'
-                : (mode === 'pallet2ctn') ? (($('outerCatSelect') && $('outerCatSelect').value) || 'Truck')
-                : ($('containerCategory') ? $('containerCategory').value : 'Truck');
-
-    return {
-      document: {
-        title:           $('docTitle').value.trim() || 'API装托计划',
-        description:     $('docDesc').value.trim(),
-        containerType:   ctnType,
-        calculationType: $('calcType').value
-      },
-      containers: [{
-        name:          $('containerType').value,
-        qty:           parseInt($('containerQty').value,10)||1,
-        maxWeight:     mw,
-        length:        parseFloat($('ctnLength').value)||16154,
-        width:         parseFloat($('ctnWidth').value)||2489,
-        height:        parseFloat($('ctnHeight').value)||2794,
-        emptyWeight:   parseFloat($('ctnEmptyWeight').value)||0,
-        maxVolPercent: 100,
-        priority:      parseInt($('ctnPriority').value,10)||0,
-        vehicleType:   $('vehicleType') ? $('vehicleType').value : 'Dry'
-      }],
-      cargoes: cargoes,
-      rules: {
-        isWeightLimited:               true,
-        isUnitloadFirst:               $('isUnitloadFirst').checked,
-        isSpreadIdenticalCargoAllowed: $('isSpreadIdentical').checked,
-        bestFitContainersSelectionType: $('bestFitType').value
-      }
-    };
-  }
-
-  /* ── fetch ── */
-  function fetchApi(path, method, body, cb) {
-    var base  = window.location.origin;
-    var opts = { method: method||'GET', headers: {} };
-    if (body) { opts.headers['Content-Type']='application/json'; opts.body=JSON.stringify(body); }
-    fetch(base+path, opts).then(function(res) {
-      var s=res.status, ct=res.headers.get('content-type')||'';
-      if (ct.indexOf('application/json')!==-1) {
-        res.json().then(function(d){ cb(d,null,s); });
-      } else {
-        res.text().then(function(t){ cb(t,null,s); });
-      }
-    }).catch(function(err){ cb(null,String(err),0); });
-  }
-
-  /* ── pick item ── */
-  function pickItem(data) {
-    if (!data) return null;
-    if (data.items && data.items.length) return data.items[0];
-    if (data.loadSummary) return data;
-    return null;
-  }
-
-  /* ── 3D visualization (Three.js) ── */
-  function init3D() {
-    if (!window.THREE) return null;
-    var canvas = $('vizCanvas');
-    if (!canvas) return null;
-    var w = canvas.clientWidth  || 800;
-    var h = canvas.clientHeight || 320;
-    var renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(w, h, false);
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    var scene = new THREE.Scene();
-    var camera = new THREE.PerspectiveCamera(48, w / h, 0.1, 8000);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
-    var sun = new THREE.DirectionalLight(0xffffff, 1.0);
-    sun.position.set(120, 220, 160); sun.castShadow = true;
-    sun.shadow.mapSize.set(1024, 1024); scene.add(sun);
-    var fill = new THREE.DirectionalLight(0x8899ff, 0.35);
-    fill.position.set(-100, 60, -100); scene.add(fill);
-    var controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true; controls.dampingFactor = 0.07;
-    controls.enablePan = true; controls.minDistance = 0.5; controls.maxDistance = 2000;
-    var cargoGroup = new THREE.Group();
-    scene.add(cargoGroup);
-    (function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); })();
-    window.addEventListener('resize', function () {
-      var nw = canvas.clientWidth, nh = canvas.clientHeight;
-      if (nw && nh) { camera.aspect = nw/nh; camera.updateProjectionMatrix(); renderer.setSize(nw, nh, false); }
-    });
-    return { renderer:renderer, scene:scene, camera:camera, controls:controls, cargoGroup:cargoGroup };
-  }
-
-  function clearScene3D() {
-    if (!_3d) return;
-    var cg = _3d.cargoGroup;
-    while (cg.children.length) cg.remove(cg.children[0]);
-    ['ctnWire','ctnFront','ctnLeft','ctnRight','ctnTop','floor','palletBase','palletLegs'].forEach(function(n){
-      var o = _3d.scene.getObjectByName(n); if (o) _3d.scene.remove(o);
-    });
-  }
-
-  function addNamedMesh(name, geo, mat, pos, parent) {
-    var m = new THREE.Mesh(geo, mat);
-    m.name = name; m.position.set(pos[0], pos[1], pos[2]);
-    m.receiveShadow = true; m.castShadow = true;
-    (parent || _3d.scene).add(m);
-    return m;
-  }
-
-  /* ── draw truck / container mode ── */
-  function drawTruckMode(fc, cargoes) {
-    var S  = 100;
-    var as = fc.actualSize || {};
-    var cL = (as.length || 12000) / S;
-    var cW = (as.width  || 2500)  / S;
-    var cH = (as.height || 2600)  / S;
-
-    _3d.scene.background = new THREE.Color(0x0f172a);
-
-    /* floor */
-    var fl = new THREE.Mesh(new THREE.PlaneGeometry(cL, cW),
-      new THREE.MeshStandardMaterial({ color:0x1e293b, roughness:1 }));
-    fl.name='floor'; fl.rotation.x=-Math.PI/2; fl.position.set(cL/2,0.002,cW/2); fl.receiveShadow=true;
-    _3d.scene.add(fl);
-
-    /* container wireframe */
-    var ctnE = new THREE.EdgesGeometry(new THREE.BoxGeometry(cL, cH, cW));
-    var ctnL = new THREE.LineSegments(ctnE, new THREE.LineBasicMaterial({color:0x94a3b8}));
-    ctnL.name='ctnWire'; ctnL.position.set(cL/2, cH/2, cW/2);
-    _3d.scene.add(ctnL);
-
-    /* semi-transparent back+left+right walls */
-    var wallMat = new THREE.MeshPhongMaterial({color:0x1e3a5f, transparent:true, opacity:0.18, side:THREE.DoubleSide});
-    var backM = new THREE.Mesh(new THREE.PlaneGeometry(cW, cH), wallMat);
-    backM.name='ctnFront'; backM.rotation.y=Math.PI/2; backM.position.set(0, cH/2, cW/2); _3d.scene.add(backM);
-    var rightM = new THREE.Mesh(new THREE.PlaneGeometry(cL, cH), wallMat.clone());
-    rightM.name='ctnRight'; rightM.position.set(cL/2, cH/2, 0); _3d.scene.add(rightM);
-    var leftM = new THREE.Mesh(new THREE.PlaneGeometry(cL, cH), wallMat.clone());
-    leftM.name='ctnLeft'; leftM.position.set(cL/2, cH/2, cW); _3d.scene.add(leftM);
-    var topM = new THREE.Mesh(new THREE.PlaneGeometry(cL, cW), wallMat.clone());
-    topM.name='ctnTop'; topM.rotation.x=Math.PI/2; topM.position.set(cL/2, cH, cW/2); _3d.scene.add(topM);
-
-    if (fc.spaces && fc.spaces.length) {
-      placeCargoFromSpaces(fc.spaces, 0);
-    } else {
-      placeCargo(cargoes, 0, cL, cW, cH);
-    }
-
-    var dist = Math.max(cL, cW, cH) * 1.85;
-    _3d.camera.position.set(cL*0.7, cH*1.3, dist);
-    _3d.camera.lookAt(cL/2, cH/2, cW/2);
-    _3d.controls.target.set(cL/2, cH/2, cW/2);
-    _3d.controls.update();
-  }
-
-  /* ── draw pallet mode ── */
-  function drawPalletMode(fc, cargoes) {
-    var S  = 100;
-    var as = fc.actualSize || {};
-    var cL = (as.length || 1200) / S;
-    var cW = (as.width  || 800)  / S;
-    var cH = (as.height || 1600) / S;
-    var palletH = 1.5; /* 150mm pallet base in scene units (100mm = 1 unit) */
-
-    _3d.scene.background = new THREE.Color(0x1a2035);
-
-    /* floor grid */
-    var gridHelper = new THREE.GridHelper(Math.max(cL,cW)*3, 12, 0x334155, 0x1e293b);
-    gridHelper.name='floor'; gridHelper.position.set(cL/2, 0, cW/2);
-    _3d.scene.add(gridHelper);
-
-    /* pallet deck (top board) */
-    var deckMat = new THREE.MeshPhongMaterial({color:0x8B6914, shininess:20});
-    var deckMesh = new THREE.Mesh(new THREE.BoxGeometry(cL, palletH*0.4, cW), deckMat);
-    deckMesh.name='palletBase'; deckMesh.position.set(cL/2, palletH*0.8, cW/2);
-    deckMesh.castShadow=true; deckMesh.receiveShadow=true;
-    _3d.scene.add(deckMesh);
-
-    /* pallet legs group (3x2 blocks) */
-    var legMat = new THREE.MeshPhongMaterial({color:0x7a5c10, shininess:10});
-    var legGroup = new THREE.Group(); legGroup.name='palletLegs';
-    var legW=cL*0.28, legD=cW*0.22, legH=palletH*0.6;
-    var legPosX=[cL*0.1, cL/2, cL*0.9];
-    var legPosZ=[cW*0.15, cW*0.85];
-    for (var lx=0; lx<3; lx++) for (var lz=0; lz<2; lz++) {
-      var leg=new THREE.Mesh(new THREE.BoxGeometry(legW, legH, legD), legMat);
-      leg.position.set(legPosX[lx], legH/2, legPosZ[lz]);
-      leg.castShadow=true; legGroup.add(leg);
-    }
-    _3d.scene.add(legGroup);
-
-    /* wireframe boundary */
-    var stackH = cH - palletH;
-    var bndE = new THREE.EdgesGeometry(new THREE.BoxGeometry(cL, stackH, cW));
-    var bndL = new THREE.LineSegments(bndE, new THREE.LineBasicMaterial({color:0x475569, transparent:true, opacity:0.5}));
-    bndL.name='ctnWire'; bndL.position.set(cL/2, palletH + stackH/2, cW/2);
-    _3d.scene.add(bndL);
-
-    if (fc.spaces && fc.spaces.length) {
-      placeCargoFromSpaces(fc.spaces, palletH);
-    } else {
-      placeCargo(cargoes, palletH, cL, cW, stackH);
-    }
-
-    /* bird-eye-ish camera */
-    var dist = Math.max(cL, cW) * 3.5;
-    _3d.camera.position.set(cL/2, dist*0.9, dist*1.1);
-    _3d.camera.lookAt(cL/2, cH/2, cW/2);
-    _3d.controls.target.set(cL/2, cH/2, cW/2);
-    _3d.controls.update();
-  }
-
-  /* ── place cargo from API spaces (exact coordinates) ── */
-  function placeCargoFromSpaces(spaces, baseY) {
-    var S = 100;
-    var gap = 0.015;
-    var edgeMat = new THREE.LineBasicMaterial({color:0xffffff, transparent:true, opacity:0.20});
-    for (var si = 0; si < spaces.length; si++) {
-      var sp = spaces[si];
-      var cargo = sp.cargo || {};
-      var hexStr = (cargo.colorHexaCode || '').replace('#','');
-      var col = (hexStr.length === 6) ? parseInt(hexStr, 16) : (cargo.color || P3[si % P3.length]);
-      var placements = sp.placements || [];
-      for (var pi = 0; pi < placements.length; pi++) {
-        var pl = placements[pi];
-        var sL = Math.max(0.02, (pl.size.length || cargo.length || 100) / S - gap);
-        var sW = Math.max(0.02, (pl.size.width  || cargo.width  || 100) / S - gap);
-        var sH = Math.max(0.02, (pl.size.height || cargo.height || 100) / S - gap);
-        var x  = pl.pos.length / S + sL / 2 + gap / 2;
-        var y  = baseY + pl.pos.height / S + sH / 2 + gap / 2;
-        var z  = pl.pos.width  / S + sW / 2 + gap / 2;
-        var geo = new THREE.BoxGeometry(sL, sH, sW);
-        var mat = new THREE.MeshPhongMaterial({color:col, transparent:true, opacity:0.88, shininess:70});
-        var mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set(x, y, z);
-        mesh.castShadow = true; mesh.receiveShadow = true;
-        _3d.cargoGroup.add(mesh);
-        var edges = new THREE.LineSegments(new THREE.EdgesGeometry(geo), edgeMat);
-        edges.position.copy(mesh.position);
-        _3d.cargoGroup.add(edges);
-      }
-    }
-  }
-
-  /* ── shared cargo placement — floor-first BLD ──
-     Strategy: expand each manifest SKU into individual box specs, sort by
-     footprint (L×W) desc so largest items go down first, then sweep
-     across X then Z to fill each layer before moving up.
-  */
-  function placeCargo(manifest, baseY, maxL, maxW, maxH) {
-    var gap = 0.06;
-    var edgeMat = new THREE.LineBasicMaterial({color:0xffffff,transparent:true,opacity:0.18});
-
-    /* 1. build flat list of box specs (one entry per piece, capped at 80 per SKU for perf) */
-    var boxes = [];
-    for (var i=0; i<manifest.length; i++) {
-      var entry = manifest[i];
-      var mc  = entry.cargo || {};
-      var qty = Math.min(entry.cargoesLoaded != null ? entry.cargoesLoaded : (mc.qty||1), 80);
-      var bL  = Math.max(0.15, (mc.length||400)/100);
-      var bWd = Math.max(0.15, (mc.width ||300)/100);
-      var bH  = Math.max(0.15, (mc.height||300)/100);
-      var col = P3[i % P3.length];
-      for (var q=0; q<qty; q++) boxes.push({bL:bL, bWd:bWd, bH:bH, col:col});
-    }
-
-    /* 2. sort by footprint desc (largest base first = floor-first) */
-    boxes.sort(function(a,b){ return (b.bL*b.bWd) - (a.bL*a.bWd); });
-
-    /* 3. place using row-shelf algorithm per layer
-          Within each layer: walk X, when row full move Z, when floor full move Y */
-    var curX=0, curZ=0, curY=baseY;
-    var rowMaxZ=0, layerMaxY=0;
-
-    for (var k=0; k<boxes.length; k++) {
-      var b = boxes[k];
-
-      /* try to place at current (curX, curZ, curY) */
-      if (curX + b.bL > maxL + 0.01) {
-        /* next row in same layer */
-        curX = 0;
-        curZ += rowMaxZ + gap;
-        rowMaxZ = 0;
-      }
-      if (curZ + b.bWd > maxW + 0.01) {
-        /* next layer */
-        curX = 0;
-        curZ = 0;
-        rowMaxZ = 0;
-        curY += layerMaxY + gap;
-        layerMaxY = 0;
-      }
-      if (curY - baseY + b.bH > maxH + 0.01) break; /* out of vertical space */
-
-      var boxGeo = new THREE.BoxGeometry(b.bL-gap, b.bH-gap, b.bWd-gap);
-      var boxMat = new THREE.MeshPhongMaterial({color:b.col,transparent:true,opacity:0.88,shininess:70});
-      var mesh = new THREE.Mesh(boxGeo, boxMat);
-      mesh.position.set(curX+b.bL/2, curY+b.bH/2, curZ+b.bWd/2);
-      mesh.castShadow=true; mesh.receiveShadow=true;
-      _3d.cargoGroup.add(mesh);
-      var edges = new THREE.LineSegments(new THREE.EdgesGeometry(boxGeo), edgeMat);
-      edges.position.copy(mesh.position);
-      _3d.cargoGroup.add(edges);
-
-      curX += b.bL + gap;
-      if (b.bWd  > rowMaxZ)  rowMaxZ  = b.bWd;
-      if (b.bH   > layerMaxY) layerMaxY = b.bH;
-    }
-
-    /* fallback fill if no manifest */
-    if (manifest.length===0) {
-      var fillMesh=new THREE.Mesh(
-        new THREE.BoxGeometry(maxL*0.8, maxH*0.4, maxW*0.8),
-        new THREE.MeshPhongMaterial({color:0x0f766e,transparent:true,opacity:0.22})
-      );
-      fillMesh.position.set(maxL/2, baseY+maxH*0.2, maxW/2);
-      _3d.cargoGroup.add(fillMesh);
-    }
-  }
-
-  /* ── compound volume utilization: actual cargo vol / container vol ── */
-  function compoundVolPct(fc) {
-    var manifest = (fc && fc.manifest) || [];
-    var as = (fc && fc.actualSize) || {};
-    var ctnVol = (parseFloat(as.length)||0) * (parseFloat(as.width)||0) * (parseFloat(as.height)||0);
-    if (!ctnVol) return null;
-    var cargoVol = 0;
-    for (var k = 0; k < manifest.length; k++) {
-      var ent = manifest[k], mc = ent.cargo || {};
-      var qty = parseFloat(ent.cargoesLoaded != null ? ent.cargoesLoaded : mc.qty) || 0;
-      cargoVol += qty * (parseFloat(mc.length)||0) * (parseFloat(mc.width)||0) * (parseFloat(mc.height)||0);
-    }
-    return cargoVol / ctnVol * 100;
-  }
-
-  /* ── 3D: pallet-then-container mode ── */
-  function drawPallet2CtnMode(fc, manifest) {
-    var S   = 100;
-    var as  = fc.actualSize || {};
-    var cL  = (as.length || 12000) / S;
-    var cW  = (as.width  || 2500)  / S;
-    var cH  = (as.height || 2600)  / S;
-
-    var pL  = parseFloat($('plt_length')    ? $('plt_length').value    : 1220) / S;
-    var pW  = parseFloat($('plt_width')     ? $('plt_width').value     : 820)  / S;
-    var pTh = parseFloat($('plt_thickness') ? $('plt_thickness').value : 150)  / S;
-    var pMH = parseFloat($('plt_maxHeight') ? $('plt_maxHeight').value : 1800) / S;
-
-    _3d.scene.background = new THREE.Color(0x0f172a);
-
-    /* floor */
-    var fl = new THREE.Mesh(new THREE.PlaneGeometry(cL, cW),
-      new THREE.MeshStandardMaterial({color:0x1e293b, roughness:1}));
-    fl.name='floor'; fl.rotation.x=-Math.PI/2; fl.position.set(cL/2,0.002,cW/2);
-    fl.receiveShadow=true; _3d.scene.add(fl);
-
-    /* outer container wireframe + semi-transparent walls */
-    var ctnLine = new THREE.LineSegments(
-      new THREE.EdgesGeometry(new THREE.BoxGeometry(cL,cH,cW)),
-      new THREE.LineBasicMaterial({color:0x94a3b8}));
-    ctnLine.name='ctnWire'; ctnLine.position.set(cL/2,cH/2,cW/2);
-    _3d.scene.add(ctnLine);
-    var wm = new THREE.MeshPhongMaterial({color:0x1e3a5f,transparent:true,opacity:0.18,side:THREE.DoubleSide});
-    var walls = [
-      {n:'ctnFront', geo:[cW,cH], pos:[0,cH/2,cW/2],  ry:Math.PI/2},
-      {n:'ctnRight', geo:[cL,cH], pos:[cL/2,cH/2,0],  ry:0},
-      {n:'ctnLeft',  geo:[cL,cH], pos:[cL/2,cH/2,cW], ry:0},
-      {n:'ctnTop',   geo:[cL,cW], pos:[cL/2,cH,cW/2], rx:Math.PI/2}
-    ];
-    walls.forEach(function(w) {
-      var m = new THREE.Mesh(new THREE.PlaneGeometry(w.geo[0],w.geo[1]), wm.clone());
-      m.name=w.n; m.position.set(w.pos[0],w.pos[1],w.pos[2]);
-      if (w.rx) m.rotation.x=w.rx; if (w.ry) m.rotation.y=w.ry;
-      _3d.scene.add(m);
-    });
-
-    /* ── pallet grid: how many pallets fit in container ── */
-    var gapP  = 0.08;  /* 8 cm gap between pallets */
-    var numX  = Math.max(1, Math.floor((cL + gapP) / (pL + gapP)));
-    var numZ  = Math.max(1, Math.floor((cW + gapP) / (pW + gapP)));
-    var nPal  = numX * numZ;
-
-    /* ── build cargo list from manifest ── */
-    var cList = [];
-    for (var k = 0; k < manifest.length; k++) {
-      var ent = manifest[k], mc0 = ent.cargo || {};
-      var qty = parseFloat(ent.cargoesLoaded != null ? ent.cargoesLoaded : mc0.qty) || 0;
-      if (!qty) continue;
-      cList.push({ mc: mc0, qty: qty, col: P3[k % P3.length] });
-    }
-
-    /* ── pre-calculate total stack height per pallet to apply uniform scale ── */
-    var totalEstH = 0;
-    for (var ci = 0; ci < cList.length; ci++) {
-      var mc1 = cList[ci].mc;
-      var uL  = Math.max(0.1, (parseFloat(mc1.length)||600)/S);
-      var uW  = Math.max(0.1, (parseFloat(mc1.width) ||400)/S);
-      var uH  = Math.max(0.1, (parseFloat(mc1.height)||300)/S);
-      var cols = Math.max(1, Math.floor(pL/uL));
-      var deps = Math.max(1, Math.floor(pW/uW));
-      var qtyPerPal = cList[ci].qty / nPal;
-      var layers    = Math.max(1, Math.ceil(qtyPerPal / (cols * deps)));
-      totalEstH += uH * layers;
-    }
-    var maxSH = Math.max(0.01, pMH - pTh);
-    var scale = (totalEstH > maxSH && totalEstH > 0) ? maxSH / totalEstH : 1.0;
-
-    /* ── materials ── */
-    var deckMat = new THREE.MeshPhongMaterial({color:0x8B6914, shininess:25});
-    var legMat  = new THREE.MeshPhongMaterial({color:0x6b4d10, shininess:10});
-
-    for (var pi = 0; pi < nPal; pi++) {
-      var ix = pi % numX;
-      var iz = Math.floor(pi / numX);
-      var px = ix * (pL + gapP);
-      var pz = iz * (pW + gapP);
-
-      /* pallet deck */
-      var deck = new THREE.Mesh(new THREE.BoxGeometry(pL, pTh, pW), deckMat.clone());
-      deck.position.set(px+pL/2, pTh/2, pz+pW/2);
-      deck.castShadow=true; deck.receiveShadow=true; _3d.cargoGroup.add(deck);
-
-      /* 3 support beams */
-      var beamH=pTh*0.55, beamD=pW*0.22;
-      for (var b=0; b<3; b++) {
-        var beam = new THREE.Mesh(new THREE.BoxGeometry(pL*0.25,beamH,beamD), legMat.clone());
-        beam.position.set(px+pL*(b*0.37+0.12), -beamH/2, pz+pW/2);
-        _3d.cargoGroup.add(beam);
-      }
-
-      /* ── one colored block per SKU type stacked on pallet ── */
-      var curY  = pTh;
-      var usedH = 0;
-      for (var ci = 0; ci < cList.length; ci++) {
-        var cargo = cList[ci], mc2 = cargo.mc;
-        var uL2   = Math.max(0.1, (parseFloat(mc2.length)||600)/S);
-        var uW2   = Math.max(0.1, (parseFloat(mc2.width) ||400)/S);
-        var uH2   = Math.max(0.1, (parseFloat(mc2.height)||300)/S);
-        var cols2 = Math.max(1, Math.floor(pL/uL2));
-        var deps2 = Math.max(1, Math.floor(pW/uW2));
-        var qtyPal2  = cargo.qty / nPal;
-        var layers2  = Math.max(1, Math.ceil(qtyPal2 / (cols2 * deps2)));
-        var blockH   = uH2 * layers2 * scale;
-        blockH = Math.max(0.01, Math.min(blockH, maxSH - usedH));
-        if (blockH < 0.01) continue;
-
-        var cGeo = new THREE.BoxGeometry(pL*0.92, blockH, pW*0.92);
-        var cMat = new THREE.MeshPhongMaterial({color:cargo.col, transparent:true, opacity:0.85, shininess:60});
-        var cMesh = new THREE.Mesh(cGeo, cMat);
-        cMesh.position.set(px+pL/2, curY+blockH/2, pz+pW/2);
-        cMesh.castShadow=true; _3d.cargoGroup.add(cMesh);
-        var eL = new THREE.LineSegments(new THREE.EdgesGeometry(cGeo),
-          new THREE.LineBasicMaterial({color:0xffffff, transparent:true, opacity:0.15}));
-        eL.position.copy(cMesh.position); _3d.cargoGroup.add(eL);
-        curY  += blockH;
-        usedH += blockH;
-      }
-    }
-
-    var dist = Math.max(cL,cW,cH)*1.85;
-    _3d.camera.position.set(cL*0.7, cH*1.3, dist);
-    _3d.camera.lookAt(cL/2, cH/2, cW/2);
-    _3d.controls.target.set(cL/2, cH/2, cW/2);
-    _3d.controls.update();
-  }
-
-  function drawViz(fc) {
-    /* always render Three.js estimation */
-    if (!window.THREE) return;
-    if (!fc) return;
-    if (!_3d) _3d = init3D();
-    if (!_3d) return;
-    clearScene3D();
-
-    var manifest = fc.manifest || [];
-    var mode = ($('calcMode') && $('calcMode').value) || 'pallet';
-    var cat  = $('containerCategory') ? $('containerCategory').value : 'Pallet';
-
-    if (mode === 'pallet2ctn') {
-      drawPallet2CtnMode(fc, manifest);
-    } else if (mode === 'pallet' || cat === 'Pallet') {
-      drawPalletMode(fc, manifest);
-    } else {
-      drawTruckMode(fc, manifest);
-    }
-  }
-
-  /* ── render all results ── */
-  function renderResult(data) {
-    var item = pickItem(data);
-    if (!item) {
-      setStatus('HTTP 200 但响应中无 loadSummary 数据', 'error');
-      return;
-    }
-
-    var summary    = item.loadSummary    || {};
-    var containers = item.filledContainers || [];
-    _lastContainers = containers;
-    var fc         = containers[0]       || {};
-    var fcs        = fc.loadSummary      || {};
-    var doc        = item.document       || {};
-
-    setText('mContainers', safeGet(summary,'containersLoaded'));
-    var _rMode = ($('calcMode') && $('calcMode').value) || 'pallet';
-    var _rVol  = (_rMode === 'pallet2ctn') ? (compoundVolPct(fc) || safeGet(fcs,'volumeUtilization')) : safeGet(fcs,'volumeUtilization');
-    setText('mVolume',     pct(_rVol));
-    setText('mWeight',     pct(safeGet(fcs,'weightUtilization')));
-    setText('mPieces',     safeGet(summary,'piecesLoaded'));
-    setText('mDocTitle',   doc.title || '—');
-    setHtml('mVolumeBar',  bar(_rVol));
-    setHtml('mWeightBar',  bar(safeGet(fcs,'weightUtilization')));
-
-    ['card-containers','card-volume','card-weight','card-pieces'].forEach(flash);
-
-    drawViz(containers[0] || null);
-
-    // container table
-    if (!containers.length) {
-      setHtml('containerRows','<tr><td colspan="6"><div class="empty-state">无容器数据</div></td></tr>');
-    } else {
-      var ch='';
-      for (var i=0; i<containers.length; i++) {
-        var c=containers[i], cs=c.loadSummary||{};
-        var statusTag = (item.status==='succeed')
-          ? '<span class="tag tag-green">succeed</span>'
-          : '<span class="tag tag-gray">'+e(item.status)+'</span>';
-        var rowCls = (i===0) ? ' class="ctn-row-sel"' : '';
-        var mfst = c.manifest || [];
-        ch+='<tr'+rowCls+' onclick="selectContainer('+i+')">';
-        ch+='<td><strong>'+e(c.name)+'</strong></td>';
-        ch+='<td>'+mfst.length+'</td>';  /* unique SKU types */
-        ch+='<td>'+e(safeGet(cs,'piecesLoaded'))+'</td>'; /* total pieces */
-        ch+='<td>'+bar(cs.volumeUtilization)+' '+pct(cs.volumeUtilization)+'</td>';
-        ch+='<td>'+bar(cs.weightUtilization)+' '+pct(cs.weightUtilization)+'</td>';
-        ch+='<td>'+pct(cs.floorUtilization)+'</td>';
-        ch+='</tr>';
-      }
-      setHtml('containerRows', ch);
-    }
-
-    // manifest table — shows first container by default
-    renderManifest(containers[0] || null);
-
-    setText('stamp', '更新时间: '+new Date().toLocaleString());
-
-    // 默认选中第一行，展示图片+清单
-    if (containers.length) selectContainer(0);
-  }
-
-  function renderManifest(fc) {
-    var manifest = (fc && fc.manifest) || [];
-    if (!manifest.length) {
-      setHtml('manifestRows','<tr><td colspan="9"><div class="empty-state">无清单数据</div></td></tr>');
-      setHtml('manifestFoot','');
-      return;
-    }
-    var mh='', totalW=0, totalV=0;
-    for (var k=0; k<manifest.length; k++) {
-      var entry= manifest[k];
-      var mc   = entry.cargo || {};
-      /* cargoesLoaded on manifest entry = qty actually packed in THIS container */
-      var qty  = parseFloat(entry.cargoesLoaded != null ? entry.cargoesLoaded : mc.qty) || 0;
-      var wt   = parseFloat(mc.weight) || 0;
-      var l    = parseFloat(mc.length) || 0;
-      var w    = parseFloat(mc.width)  || 0;
-      var h    = parseFloat(mc.height) || 0;
-      var rowW = qty * wt;
-      var rowV = qty * l * w * h / 1e9;
-      totalW += rowW;
-      totalV += rowV;
-      var palTag= mc.isPalletized
-        ? '<span class="tag tag-green">托盘</span>'
-        : '<span class="tag tag-gray">普通</span>';
-      mh+='<tr>';
-      mh+='<td>'+(k+1)+'</td>';
-      mh+='<td><strong>'+e(mc.name)+'</strong></td>';
-      mh+='<td>'+e(mc.description)+'</td>';
-      mh+='<td>'+e(mc.length)+'&times;'+e(mc.width)+'&times;'+e(mc.height)+'</td>';
-      mh+='<td>'+e(mc.weight)+'</td>';
-      mh+='<td>'+qty+'</td>';
-      mh+='<td>'+rowW.toFixed(2)+'</td>';
-      mh+='<td>'+rowV.toFixed(4)+'</td>';
-      mh+='<td>'+palTag+'</td>';
-      mh+='</tr>';
-    }
-    setHtml('manifestRows', mh);
-    setHtml('manifestFoot',
-      '<tr style="font-weight:700;background:#f0f4ff">'+
-      '<td colspan="6" style="text-align:right">合计</td>'+
-      '<td>'+totalW.toFixed(2)+' kg</td>'+
-      '<td>'+totalV.toFixed(4)+' m³</td>'+
-      '<td></td></tr>'
-    );
-  }
-
-  function selectContainer(i) {
-    var fc = _lastContainers[i];
-    if (!fc) return;
-    var rows = document.querySelectorAll('#containerRows tr');
-    for (var r=0; r<rows.length; r++) rows[r].classList.remove('ctn-row-sel');
-    if (rows[i]) rows[i].classList.add('ctn-row-sel');
-    var cs = fc.loadSummary || {};
-    var _sMode = ($('calcMode') && $('calcMode').value) || 'pallet';
-    var _sVol  = (_sMode === 'pallet2ctn') ? (compoundVolPct(fc) || cs.volumeUtilization) : cs.volumeUtilization;
-    setText('mVolume', pct(_sVol));
-    setText('mWeight', pct(cs.weightUtilization));
-    setHtml('mVolumeBar', bar(_sVol));
-    setHtml('mWeightBar', bar(cs.weightUtilization));
-    drawViz(fc);
-    renderManifest(fc);
-    setText('stamp', '更新时间: '+new Date().toLocaleString());
-
-    // 展示该容器的官方图片
-    var ctnDetail = $('ctnDetail');
-    ctnDetail.style.display = '';
-    var imgBody = $('apiImgBody');
-    var imgs = fc.graphics && fc.graphics.images;
-    if (imgs) {
-      var imgHtml = '<div class="api-img-row">';
-      var views = [
-        {key:'path3DDiagram', label:'3D'},
-        {key:'path2DFront',   label:'前'},
-        {key:'path2DRear',    label:'后'},
-        {key:'path2DLeft',    label:'左'},
-        {key:'path2DRight',   label:'右'},
-        {key:'path2DTop',     label:'顶'},
-        {key:'path2DBottom',  label:'底'}
-      ];
-      for (var vi=0; vi<views.length; vi++) {
-        var v = views[vi];
-        if (!imgs[v.key]) continue;
-        var cls = (v.key==='path3DDiagram') ? 'img-3d' : '';
-        imgHtml += '<img src="'+imgs[v.key]+'" class="'+cls+'" title="'+v.label+'" onclick="window.open(this.src,\'_blank\')" alt="'+v.label+'"/>';
-      }
-      imgHtml += '</div>';
-      imgBody.innerHTML = imgHtml;
-    } else {
-      imgBody.innerHTML = '<div class="empty-state">暂无图片</div>';
-    }
-  }
-  window.selectContainer = selectContainer;
-
-  /* ── handle api response ── */
-  function handleResponse(data, err, status) {
-    setBusy(false);
-    if (err) {
-      setStatus('请求失败: '+err, 'error');
-      setText('rawJson', err);
-      $('wRaw').style.display='block';
-      return;
-    }
-    $('rawJson').value = typeof data==='string' ? data : JSON.stringify(data,null,2);
-    if (status >= 400) {
-      var msg = (data && data.message) ? data.message : 'HTTP '+status;
-      setStatus('错误 '+status+': '+msg, 'error');
-      return;
-    }
-    setStatus('HTTP '+status+' — 成功 ✓', 'ok');
-    renderResult(data);
-  }
-
-  /* ── button events ── */
-  $('btnCreate').addEventListener('click', function(){
-    setBusy(true);
-    var qs = 'UOM=UnitMetric&placementsCreated=true';
-    if ($('chkGraphics') && $('chkGraphics').checked) qs += '&graphicsCreated=true&graphicsImageWidth=800&graphicsImageDepth=600';
-    if ($('chkSpaces')   && $('chkSpaces').checked)   qs += '&spacesCreated=true';
-    fetchApi('/cubemaster/api/loads?'+qs,'POST',buildPayload(),handleResponse);
-  });
-
-  /* ── sku row management ── */
-  function addSkuRow(sku, l, w, h, kg, qty, orient, maxL, opt, pal) {
-    var d = {
-      name: sku||'', l: l||'', w: w||'', h: h||'',
-      weight: kg||'', qty: qty||'',
-      orient: orient||'OrientationsAll', maxL: maxL||'0',
-      opt: !!opt, pal: !!pal
-    };
-    var tr = document.createElement('tr');
-    tr.innerHTML = skuRowHtml(d);
-    $('skuBody').appendChild(tr);
-  }
-
-  $('btnAddSku').addEventListener('click', function(){ addSkuRow(); });
-
-  /* ── excel dropdown toggle ── */
-  $('ddExcel').querySelector('.dd-arrow').addEventListener('click', function(e) {
-    e.stopPropagation();
-    $('ddExcel').classList.toggle('open');
-  });
-  $('ddExcel').querySelector('.dd-main').addEventListener('click', function() {
-    $('excelFileInput').click();
-  });
-  document.addEventListener('click', function(e) {
-    if (!$('ddExcel').contains(e.target)) $('ddExcel').classList.remove('open');
-  });
-
-  /* ── excel upload / download ── */
-  $('btnDownloadTpl').addEventListener('click', function(){
-    var ws = XLSX.utils.aoa_to_sheet([['SKU','L(mm)','W(mm)','H(mm)','kg','数量'],['ET3-PRO-SL',1150,260,200,33.2,24],['ET3-BK-EU',1145,250,205,34.5,24]]);
-    var wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Template');
-    XLSX.writeFile(wb, 'cubemaster_template.xlsx');
-  });
-  $('excelFileInput').addEventListener('change', function(ev){
-    var file = ev.target.files[0]; if (!file) return;
-    parseExcelFile(file);
-  });
-
-  function parseExcelFile(file) {
-    var reader = new FileReader();
-    reader.onload = function(e) {
-      try {
-        var wb = XLSX.read(e.target.result, {type:'array'});
-        var ws = wb.Sheets[wb.SheetNames[0]];
-        var data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
-        if (!data || data.length < 2) { alert('Excel 内容为空或格式错误'); return; }
-        $('skuBody').innerHTML = '';
-        var count = 0;
-        for (var r=1; r<data.length; r++) {
-          var row = data[r];
-          var sku = String(row[0]||'').trim(); if (!sku) continue;
-          addSkuRow(sku, parseFloat(row[1])||'', parseFloat(row[2])||'', parseFloat(row[3])||'', parseFloat(row[4])||'', parseInt(row[5],10)||'');
-          count++;
-        }
-        $('excelFileInput').value = '';
-        setStatus('已导入 '+count+' 行货物', 'ok');
-      } catch(err) { alert('解析失败: '+err.message); }
-    };
-    reader.readAsArrayBuffer(file);
-  }
-
-  /* ── collapsible sections ── */
-  function makeToggle(headId, wrapId) {
-    $(headId).addEventListener('click', function(){
-      var wrap=$(wrapId);
-      var open = wrap.style.display!=='none';
-      wrap.style.display = open ? 'none' : 'block';
-      $(headId).innerHTML = $(headId).innerHTML.replace(/[▲▼]/g, open ? '&#9660;' : '&#9650;');
-    });
-  }
-  makeToggle('hContainer','wContainer');
-  makeToggle('hRaw','wRaw');
-
-  /* initialise to pallet mode */
-  setCalcMode('pallet');
-
-})();
-</script>
+<script src="js/config.js"></script>
+<script src="js/app.js"></script>
+<script src="js/viz3d.js"></script>
 </body>
 </html>

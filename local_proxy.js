@@ -1,6 +1,6 @@
 import { createServer } from 'http';
 import { readFileSync, existsSync } from 'fs';
-import { resolve, dirname } from 'path';
+import { resolve, dirname, extname } from 'path';
 import { fileURLToPath } from 'url';
 
 const BASE_API = 'https://api.cubemaster.net';
@@ -74,6 +74,37 @@ function sendHtml(res, html) {
   res.end(body);
 }
 
+const MIME_TYPES = {
+  '.html': 'text/html',
+  '.css':  'text/css',
+  '.js':   'application/javascript',
+  '.json': 'application/json',
+  '.png':  'image/png',
+  '.jpg':  'image/jpeg',
+  '.svg':  'image/svg+xml',
+};
+
+function serveStatic(res, filePath) {
+  const safePath = resolve(__dirname, filePath);
+  if (!safePath.startsWith(__dirname)) {
+    sendJson(res, 403, { error: 'Forbidden' });
+    return;
+  }
+  if (!existsSync(safePath)) {
+    sendJson(res, 404, { error: 'Not Found' });
+    return;
+  }
+  const ext = extname(safePath).toLowerCase();
+  const mime = MIME_TYPES[ext] || 'application/octet-stream';
+  const body = readFileSync(safePath);
+  res.writeHead(200, {
+    'Content-Type': mime + (mime.startsWith('text') ? '; charset=utf-8' : ''),
+    'Content-Length': body.length,
+    'Cache-Control': 'no-store',
+  });
+  res.end(body);
+}
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = '';
@@ -105,6 +136,13 @@ const server = createServer(async (req, res) => {
         } else {
           sendHtml(res, '<h1>frontend_mock.html not found</h1>');
         }
+        return;
+      }
+
+      // Serve static assets (css/, js/)
+      if (pathname.startsWith('/cubemaster/css/') || pathname.startsWith('/cubemaster/js/')) {
+        const relPath = pathname.slice('/cubemaster/'.length);
+        serveStatic(res, relPath);
         return;
       }
 

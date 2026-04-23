@@ -12,6 +12,17 @@ BASE_API = "https://api.cubemaster.net"
 HOST = "127.0.0.1"
 PORT = 8000
 WEB_FILE = Path(__file__).with_name("frontend_mock.html")
+BASE_DIR = Path(__file__).parent
+
+MIME_TYPES = {
+    ".html": "text/html",
+    ".css": "text/css",
+    ".js": "application/javascript",
+    ".json": "application/json",
+    ".png": "image/png",
+    ".jpg": "image/jpeg",
+    ".svg": "image/svg+xml",
+}
 
 
 def pick_token(query: dict[str, list[str]], body: dict | None, headers) -> str:
@@ -86,6 +97,26 @@ class ProxyHandler(BaseHTTPRequestHandler):
                 self._send_html(WEB_FILE.read_text(encoding="utf-8"))
             else:
                 self._send_html("<h1>frontend_mock.html not found</h1>")
+            return
+
+        # Serve static assets (css/, js/)
+        if parsed.path.startswith("/css/") or parsed.path.startswith("/js/"):
+            rel = parsed.path.lstrip("/")
+            file_path = (BASE_DIR / rel).resolve()
+            if not str(file_path).startswith(str(BASE_DIR)):
+                self._send_json(403, {"error": "Forbidden"})
+                return
+            if not file_path.exists():
+                self._send_json(404, {"error": "Not Found"})
+                return
+            mime = MIME_TYPES.get(file_path.suffix.lower(), "application/octet-stream")
+            data = file_path.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", mime)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store")
+            self.end_headers()
+            self.wfile.write(data)
             return
 
         if parsed.path == "/api/health":
