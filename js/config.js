@@ -4,6 +4,12 @@ window.CM = window.CM || {};
 CM.PALETTE = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#84cc16','#f97316','#6366f1'];
 CM.P3 = [0x3b82f6,0x10b981,0xf59e0b,0xef4444,0x8b5cf6,0xec4899,0x06b6d4,0x84cc16,0xf97316,0x6366f1];
 
+var SHARED_CONTAINER_PRESETS = [
+  {name:'40HQ',  length:12032, width:2350, height:2694, maxWeight:26480, empty:3900, vtype:'Dry'},
+  {name:'40GP',  length:12032, width:2350, height:2395, maxWeight:26680, empty:3750, vtype:'Dry'},
+  {name:'20GP',  length:5898,  width:2352, height:2393, maxWeight:21770, empty:2230, vtype:'Dry'}
+];
+
 /* ── container presets ── */
 CM.PRESETS = {
   'Truck': [
@@ -11,14 +17,20 @@ CM.PRESETS = {
     {name:'48FT-DryVan',   length:14630, width:2489, height:2794, maxWeight:30000, empty:0,    vtype:'Dry'},
     {name:'26FT-BoxTruck', length:7925,  width:2235, height:2235, maxWeight:8000,  empty:0,    vtype:'Dry'}
   ],
-  'Container': [
-    {name:'40HQ',  length:12032, width:2350, height:2694, maxWeight:26480, empty:3900, vtype:'Dry'},
-    {name:'40GP',  length:12032, width:2350, height:2395, maxWeight:26680, empty:3750, vtype:'Dry'},
-    {name:'20GP',  length:5898,  width:2352, height:2393, maxWeight:21770, empty:2230, vtype:'Dry'}
-  ],
+  'Container': SHARED_CONTAINER_PRESETS.slice(),
   'Pallet': [
     {name:'Standard-Pallet-1200x800', length:1220, width:820, height:1800, maxWeight:900, empty:25, vtype:'Dry'}
-  ]
+  ].concat(SHARED_CONTAINER_PRESETS.map(function (preset) {
+    return {
+      name: preset.name,
+      length: preset.length,
+      width: preset.width,
+      height: preset.height,
+      maxWeight: preset.maxWeight,
+      empty: preset.empty,
+      vtype: preset.vtype
+    };
+  }))
 };
 
 /* ── pallet presets for 先托后柜 ──
