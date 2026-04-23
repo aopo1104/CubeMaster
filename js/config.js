@@ -10,6 +10,15 @@ var SHARED_CONTAINER_PRESETS = [
   {name:'20GP',  length:5898,  width:2352, height:2393, maxWeight:21770, empty:2230, vtype:'Dry'}
 ];
 
+var SHARED_PALLET_PRESETS = [
+  {name:'1200×1000 (欧标大)', length:1200, width:1000, maxLength:1240, maxWidth:1040, maxHeight:1800, maxWeight:1000, thickness:150, empty:25},
+  {name:'1100×1100 (方托)',   length:1100, width:1100, maxLength:1200, maxWidth:1160, maxHeight:1800, maxWeight:1000, thickness:150, empty:25},
+  {name:'1100×1000',          length:1100, width:1000, maxLength:1160, maxWidth:1040, maxHeight:1800, maxWeight:1000, thickness:150, empty:25},
+  {name:'1300×800',           length:1300, width:800,  maxLength:1340, maxWidth:840,  maxHeight:1800, maxWeight:1000, thickness:150, empty:25},
+  {name:'1400×1000',          length:1400, width:1000, maxLength:1440, maxWidth:1040, maxHeight:1800, maxWeight:1000, thickness:150, empty:25},
+  {name:'1200×800 (欧标)',    length:1200, width:800,  maxLength:1240, maxWidth:840,  maxHeight:1800, maxWeight:900,  thickness:150, empty:25}
+];
+
 /* ── container presets ── */
 CM.PRESETS = {
   'Truck': [
@@ -20,15 +29,15 @@ CM.PRESETS = {
   'Container': SHARED_CONTAINER_PRESETS.slice(),
   'Pallet': [
     {name:'Standard-Pallet-1200x800', length:1220, width:820, height:1800, maxWeight:900, empty:25, vtype:'Dry'}
-  ].concat(SHARED_CONTAINER_PRESETS.map(function (preset) {
+  ].concat(SHARED_PALLET_PRESETS.map(function (preset) {
     return {
       name: preset.name,
       length: preset.length,
       width: preset.width,
-      height: preset.height,
+      height: preset.maxHeight,
       maxWeight: preset.maxWeight,
       empty: preset.empty,
-      vtype: preset.vtype
+      vtype: 'Dry'
     };
   }))
 };
@@ -37,14 +46,7 @@ CM.PRESETS = {
  *  maxLength / maxWidth = 允许货物外廓（含超托）的最大限制，≥ 托盘底面尺寸
  *  maxHeight             = 含托盘板厚的总堆高上限（板厚已在内，API 内部会扣除）
  * ── */
-CM.PALLET_PRESETS = [
-  {name:'1200×1000 (欧标大)', length:1200, width:1000, maxLength:1240, maxWidth:1040, maxHeight:1800, maxWeight:1000, thickness:150, empty:25},
-  {name:'1100×1100 (方托)',   length:1100, width:1100, maxLength:1200, maxWidth:1160, maxHeight:1800, maxWeight:1000, thickness:150, empty:25},
-  {name:'1100×1000',          length:1100, width:1000, maxLength:1160, maxWidth:1040, maxHeight:1800, maxWeight:1000, thickness:150, empty:25},
-  {name:'1300×800',           length:1300, width:800,  maxLength:1340, maxWidth:840,  maxHeight:1800, maxWeight:1000, thickness:150, empty:25},
-  {name:'1400×1000',          length:1400, width:1000, maxLength:1440, maxWidth:1040, maxHeight:1800, maxWeight:1000, thickness:150, empty:25},
-  {name:'1200×800 (欧标)',    length:1200, width:800,  maxLength:1240, maxWidth:840,  maxHeight:1800, maxWeight:900,  thickness:150, empty:25}
-];
+CM.PALLET_PRESETS = SHARED_PALLET_PRESETS.slice();
 
 /* ── mode info texts ── */
 CM.MODE_INFO = {
