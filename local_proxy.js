@@ -34,7 +34,7 @@ async function forward(method, path, token, { params, payload } = {}) {
   const init = {
     method,
     headers: { 'TokenID': token },
-    signal: AbortSignal.timeout(40000),
+    signal: AbortSignal.timeout(180000),
   };
   if (payload !== undefined) {
     init.headers['Content-Type'] = 'application/json';

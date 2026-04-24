@@ -72,9 +72,9 @@
             <th style="padding:3px 2px">L(mm)</th>
             <th style="padding:3px 2px">W(mm)</th>
             <th style="padding:3px 2px">板厚</th>
-            <th style="padding:3px 2px" title="含超托的最大码长">maxL</th>
-            <th style="padding:3px 2px" title="含超托的最大码宽">maxW</th>
-            <th style="padding:3px 2px" title="含托盘板厚的总堆高上限">maxH⚠️</th>
+            <th style="padding:3px 2px" title="含超托的最大码长">最大装载L（可超标）</th>
+            <th style="padding:3px 2px" title="含超托的最大码宽">最大装载W（可超标）</th>
+            <th style="padding:3px 2px" title="含托盘板厚的总堆高上限">最大装载H（带托）</th>
             <th style="padding:3px 2px" title="含托盘自重的承重上限">maxWt</th>
             <th style="padding:3px 2px" title="托盘自重">自重</th>
             <th style="padding:3px 2px" title="该托盘类型最多使用数量">数量</th>
@@ -160,9 +160,9 @@
       <div><label title="容器物理承载上限">承重上限 maxWeight(kg)</label><input id="maxWeight" value="30000" /></div>
     </div>
     <div class="field" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
-      <div><label>长 length(mm)</label><input id="ctnLength" value="16154" /></div>
-      <div><label>宽 width(mm)</label><input id="ctnWidth" value="2489" /></div>
-      <div><label>高 height(mm)</label><input id="ctnHeight" value="2794" /></div>
+      <div><label id="lblCtnLength">长 length(mm)</label><input id="ctnLength" value="16154" /></div>
+      <div><label id="lblCtnWidth">宽 width(mm)</label><input id="ctnWidth" value="2489" /></div>
+      <div><label id="lblCtnHeight">高 height(mm)</label><input id="ctnHeight" value="2794" /></div>
     </div>
     <div class="field" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
       <div><label title="自重 emptyWeight(kg)">自重 emptyWeight(kg)</label><input id="ctnEmptyWeight" value="0" /></div>
@@ -196,7 +196,7 @@
         <label style="margin:0" title="true=待单个托盘装满后再开下一个；false=同类货物均衡分散到多个托盘">装满再开新托 isUnitloadFirst</label>
       </div>
       <div style="display:flex;align-items:center;gap:6px;padding-top:6px">
-        <input type="checkbox" id="isSpreadIdentical" style="width:auto" />
+        <input type="checkbox" id="isSpreadIdentical" checked style="width:auto" />
         <label style="margin:0" title="true=允许同一SKU分散到多个托盘，false=尝试集中放入同一托盘">同SKU分散 isSpreadIdenticalCargoAllowed</label>
       </div>
     </div>
@@ -221,6 +221,7 @@
           <th style="width:5%">超托W(mm)</th>
           <th style="width:5%">可选品</th>
           <th style="width:5%">托盘化</th>
+          <th style="width:4%" title="turnAllowedOnFloor：允许货物在地面水平旋转（90°换向）">地面翻转</th>
           <th style="width:3%"></th>
         </tr>
       </thead>
@@ -252,7 +253,7 @@
         <label style="margin:0" title="graphicsCreated：API 生成 2D/3D 装载图片">生成装载图片</label>
       </div>
       <div style="display:flex;align-items:center;gap:6px;padding-top:4px">
-        <input type="checkbox" id="chkSpaces" style="width:auto" />
+        <input type="checkbox" id="chkSpaces" checked style="width:auto" />
         <label style="margin:0" title="spacesCreated：返回精确货物坐标（用于本地 3D 可视化）">返回 3D 坐标</label>
       </div>
     </div>
@@ -399,6 +400,7 @@
 </main>
 
 <script src="js/config.js"></script>
+<script src="js/palletize_helper.js"></script>
 <script src="js/app.js"></script>
 <script src="js/viz3d.js"></script>
 </body>

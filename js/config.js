@@ -28,7 +28,8 @@ CM.PRESETS = {
   ],
   'Container': SHARED_CONTAINER_PRESETS.slice(),
   'Pallet': [
-    {name:'Standard-Pallet-1200x800', length:1220, width:820, height:1800, maxWeight:900, empty:25, vtype:'Dry'}
+    {name:'Standard-Pallet-1200x800', length:1220, width:820, height:1800, maxWeight:900, empty:25, vtype:'Dry'},
+    {name:'1200×1200 (方托 H=1200)',  length:1200, width:1200, height:1200, maxWeight:1000, empty:0,  vtype:'Dry'}
   ].concat(SHARED_PALLET_PRESETS.map(function (preset) {
     return {
       name: preset.name,
@@ -70,31 +71,31 @@ CM.MODE_VIZ_TITLE = {
 /* ── per-mode SKU defaults ── */
 CM.SKU_DEFAULTS = {
   'pallet': [
-    {name:'ET3-PRO-SL',   l:'1150', w:'260', h:'200', weight:'33.2', qty:'24', orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false},
-    {name:'ET3T-WH-1-EU', l:'810',  w:'375', h:'195', weight:'30',   qty:'1',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false},
-    {name:'ET3T-WH-2-EU', l:'830',  w:'185', h:'175', weight:'21.3', qty:'1',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false},
-    {name:'ET3-BK-EU',    l:'1145', w:'250', h:'205', weight:'34.5', qty:'24', orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false},
-    {name:'ET3T-BK-1-EU', l:'810',  w:'375', h:'195', weight:'30',   qty:'11', orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false},
-    {name:'ET3T-BK-2-EU', l:'830',  w:'185', h:'175', weight:'21.3', qty:'11', orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false}
+    {name:'ET3-PRO-SL',   l:'1150', w:'260', h:'200', weight:'33.2', qty:'24', orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'ET3T-WH-1-EU', l:'810',  w:'375', h:'195', weight:'30',   qty:'1',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'ET3T-WH-2-EU', l:'830',  w:'185', h:'175', weight:'21.3', qty:'1',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'ET3-BK-EU',    l:'1145', w:'250', h:'205', weight:'34.5', qty:'24', orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'ET3T-BK-1-EU', l:'810',  w:'375', h:'195', weight:'30',   qty:'11', orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'ET3T-BK-2-EU', l:'830',  w:'185', h:'175', weight:'21.3', qty:'11', orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false, turn:true}
   ],
   'direct': [
-    {name:'CartonA', l:'600', w:'400', h:'300', weight:'15', qty:'100', orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false},
-    {name:'CartonB', l:'500', w:'350', h:'250', weight:'12', qty:'80',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false}
+    {name:'CartonA', l:'600', w:'400', h:'300', weight:'15', qty:'100', orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'CartonB', l:'500', w:'350', h:'250', weight:'12', qty:'80',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0', ovhW:'0', opt:false, pal:false, turn:true}
   ],
   'pallet2ctn': [
     // overhang=true + ovhL=60: 长1145mm的箱在1100mm托盘上允许在长度方向超托60mm
-    {name:'ET223H-W-1/W-2',          l:'1145', w:'310', h:'190', weight:'29.2', qty:'106', orient:'OrientationsAll', maxL:'0', overhang:true,  ovhL:'60', ovhW:'0', opt:false, pal:false},
-    {name:'ET223H-W-3(CMP025-01M)',   l:'628',  w:'224', h:'140', weight:'8.7',  qty:'53',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false},
-    {name:'ET223H-B-1/B-2',          l:'1145', w:'310', h:'190', weight:'29.2', qty:'60',  orient:'OrientationsAll', maxL:'0', overhang:true,  ovhL:'60', ovhW:'0', opt:false, pal:false},
-    {name:'ET223H-B-3(CMP025-01M)',   l:'628',  w:'224', h:'140', weight:'8.7',  qty:'30',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false},
-    {name:'ET223-BZ-W',               l:'1145', w:'250', h:'205', weight:'36.8', qty:'30',  orient:'OrientationsAll', maxL:'0', overhang:true,  ovhL:'60', ovhW:'0', opt:false, pal:false},
-    {name:'ET223-BZ-B',               l:'1145', w:'250', h:'205', weight:'36.8', qty:'20',  orient:'OrientationsAll', maxL:'0', overhang:true,  ovhL:'60', ovhW:'0', opt:false, pal:false},
-    {name:'CMP017-W',                 l:'430',  w:'430', h:'530', weight:'10.2', qty:'30',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false},
-    {name:'CMP017-B',                 l:'430',  w:'430', h:'530', weight:'10.2', qty:'10',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false},
-    {name:'ET227H-B-4/W-4',           l:'465',  w:'345', h:'205', weight:'20.1', qty:'30',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false},
-    {name:'ET227feet/ET223-BZfeet',   l:'688',  w:'122', h:'100', weight:'7.1',  qty:'40',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false},
-    {name:'ET223Y',                   l:'985',  w:'275', h:'210', weight:'30.5', qty:'3',   orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false},
-    {name:'CMP023-01',                l:'875',  w:'245', h:'475', weight:'24.6', qty:'1',   orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false},
-    {name:'CMP025-03M',               l:'620',  w:'330', h:'127', weight:'12',   qty:'1',   orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false}
+    {name:'ET223H-W-1/W-2',          l:'1145', w:'310', h:'190', weight:'29.2', qty:'106', orient:'OrientationsAll', maxL:'0', overhang:true,  ovhL:'60', ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'ET223H-W-3(CMP025-01M)',   l:'628',  w:'224', h:'140', weight:'8.7',  qty:'53',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'ET223H-B-1/B-2',          l:'1145', w:'310', h:'190', weight:'29.2', qty:'60',  orient:'OrientationsAll', maxL:'0', overhang:true,  ovhL:'60', ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'ET223H-B-3(CMP025-01M)',   l:'628',  w:'224', h:'140', weight:'8.7',  qty:'30',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'ET223-BZ-W',               l:'1145', w:'250', h:'205', weight:'36.8', qty:'30',  orient:'OrientationsAll', maxL:'0', overhang:true,  ovhL:'60', ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'ET223-BZ-B',               l:'1145', w:'250', h:'205', weight:'36.8', qty:'20',  orient:'OrientationsAll', maxL:'0', overhang:true,  ovhL:'60', ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'CMP017-W',                 l:'430',  w:'430', h:'530', weight:'10.2', qty:'30',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'CMP017-B',                 l:'430',  w:'430', h:'530', weight:'10.2', qty:'10',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'ET227H-B-4/W-4',           l:'465',  w:'345', h:'205', weight:'20.1', qty:'30',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'ET227feet/ET223-BZfeet',   l:'688',  w:'122', h:'100', weight:'7.1',  qty:'40',  orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'ET223Y',                   l:'985',  w:'275', h:'210', weight:'30.5', qty:'3',   orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'CMP023-01',                l:'875',  w:'245', h:'475', weight:'24.6', qty:'1',   orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false, turn:true},
+    {name:'CMP025-03M',               l:'620',  w:'330', h:'127', weight:'12',   qty:'1',   orient:'OrientationsAll', maxL:'0', overhang:false, ovhL:'0',  ovhW:'0', opt:false, pal:false, turn:true}
   ]
 };

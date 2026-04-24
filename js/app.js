@@ -199,7 +199,7 @@
       +'<td><select class="orientSel">'
       +'<option value="OrientationsAll"'+(d.orient==='OrientationsAll'?' selected':'')+'>All</option>'
       +'<option value="Orientations12"'+(d.orient==='Orientations12'?' selected':'')+'>12方向</option>'
-      +'<option value="Orientations2"'+(d.orient==='Orientations2'?' selected':'')+'>2方向</option>'
+      +'<option value="Orientations14"'+(d.orient==='Orientations14'?' selected':'')+'>2方向</option>'
       +'<option value="Orientation1"'+(d.orient==='Orientation1'?' selected':'')+'>固定</option>'
       +'</select></td>'
       +'<td><input value="'+d.maxL+'" title="maxLayersOnOrientation1，0=不限"/></td>'
@@ -208,6 +208,7 @@
       +'<td><input value="'+(d.ovhW||'0')+'" title="overhangWidth(mm)：宽度方向最大超托mm，0=不超" style="width:100%"/></td>'
       +'<td><input type="checkbox" style="width:auto" title="isOptional"'+(d.opt?' checked':'')+'/></td>'
       +'<td><input type="checkbox" style="width:auto" title="isPalletized"'+(d.pal?' checked':'')+'/></td>'
+      +'<td><input type="checkbox" style="width:auto" title="turnAllowedOnFloor：允许货物在地面水平旋转 90°"'+(d.turn!==false?' checked':'')+'/></td>'
       +'<td style="text-align:center"><button onclick="this.closest(\'tr\').remove()" style="background:transparent;border:none;color:#ef4444;font-size:14px;cursor:pointer;padding:0 4px">×</button></td>';
   }
 
@@ -231,7 +232,8 @@
         ovhL:     inp[9]  ? inp[9].value    : '0',
         ovhW:     inp[10] ? inp[10].value   : '0',
         opt:      inp[11] ? inp[11].checked : false,
-        pal:      inp[12] ? inp[12].checked : false
+        pal:      inp[12] ? inp[12].checked : false,
+        turn:     inp[13] ? inp[13].checked : true
       });
     }
     _skuCache[mode] = saved;
@@ -303,6 +305,19 @@
     var st = $('secCtnTitle'); if (st) st.textContent = CM.MODE_CTN_TITLE[mode];
     var vt = $('vizTitle');    if (vt) vt.textContent = CM.MODE_VIZ_TITLE[mode];
 
+    var lblL = $('lblCtnLength');
+    var lblW = $('lblCtnWidth');
+    var lblH = $('lblCtnHeight');
+    if (mode === 'pallet') {
+      if (lblL) lblL.textContent = '最大装载L（可超标）';
+      if (lblW) lblW.textContent = '最大装载W（可超标）';
+      if (lblH) lblH.textContent = '最大装载H（带托）';
+    } else {
+      if (lblL) lblL.textContent = '长 length(mm)';
+      if (lblW) lblW.textContent = '宽 width(mm)';
+      if (lblH) lblH.textContent = '高 height(mm)';
+    }
+
     var s2sec = $('step2JsonSection');
     if (s2sec) s2sec.style.display = (mode === 'pallet2ctn') ? '' : 'none';
 
@@ -320,6 +335,13 @@
     opts = opts || {};
     var mode = ($('calcMode') && $('calcMode').value) || 'pallet';
     var rows = $('skuBody').querySelectorAll('tr'), cargoes = [];
+
+    /* pltSpec for enrichCargo when mode==='pallet' (the container IS the pallet) */
+    var _enrPltSpec = (mode === 'pallet') ? (function () {
+      var L = parseFloat($('ctnLength').value) || 1200;
+      var W = parseFloat($('ctnWidth').value)  || 1000;
+      return { length: L, width: W, maxLength: L + 80, maxWidth: W + 60 };
+    }()) : null;
 
     var palletSpec = null;
     if (mode === 'pallet2ctn') {
@@ -351,6 +373,7 @@
       var isPalletizedChk = rows[i].querySelectorAll('input[type=checkbox]')[2];
 
       var forcePalletized = (mode === 'pallet2ctn');
+      var turnAllowedChk  = rows[i].querySelectorAll('input[type=checkbox]')[3];
       var cargoObj = {
         style:  'Shipcase',
         name:   inp[0].value.trim(),
@@ -361,12 +384,14 @@
         maxLayersOnOrientation1:  parseInt(maxLayerInp ? maxLayerInp.value : '0', 10)||0,
         overhangAllowed:          overhangInp ? overhangInp.checked : false,
         isOptional:   isOptionalChk   ? isOptionalChk.checked    : false,
-        isPalletized: forcePalletized ? true : (isPalletizedChk ? isPalletizedChk.checked : false)
+        isPalletized: forcePalletized ? true : (isPalletizedChk ? isPalletizedChk.checked : false),
+        turnAllowedOnFloor: turnAllowedChk ? turnAllowedChk.checked : true
       };
       if (cargoObj.overhangAllowed) {
         cargoObj.overhangLength = parseInt(ovhLInp ? ovhLInp.value : '0', 10) || 0;
         cargoObj.overhangWidth  = parseInt(ovhWInp ? ovhWInp.value : '0', 10) || 0;
       }
+      /* ── Smart orientation / overhang enrichment (pallet mode) — disabled ── */
 
       if (mode === 'pallet2ctn') {
         cargoObj.palletizing = {
@@ -402,16 +427,27 @@
         height:        parseFloat($('ctnHeight').value)||2794,
         emptyWeight:   parseFloat($('ctnEmptyWeight').value)||0,
         maxVolPercent: 100,
+        maxLength:     parseFloat($('ctnLength').value)||0,
+        maxWidth:      parseFloat($('ctnWidth').value)||0,
+        maxHeight:     parseFloat($('ctnHeight').value)||0,
         priority:      parseInt($('ctnPriority').value,10)||0,
         vehicleType:   $('vehicleType') ? $('vehicleType').value : 'Dry'
       }],
       cargoes: cargoes,
-      rules: {
-        isWeightLimited:               true,
-        isUnitloadFirst:               $('isUnitloadFirst').checked,
-        isSpreadIdenticalCargoAllowed: $('isSpreadIdentical').checked,
-        bestFitContainersSelectionType: $('bestFitType').value
-      }
+      rules: (function () {
+        var r = {
+          isWeightLimited:               true,
+          isUnitloadFirst:               $('isUnitloadFirst').checked,
+          isSpreadIdenticalCargoAllowed: $('isSpreadIdentical').checked,
+          bestFitContainersSelectionType: $('bestFitType').value
+        };
+        if (mode === 'pallet') {
+          r.algorithmType     = 'Optimization';
+          r.optimizationLevel = 4;
+          r.fillDirection     = 'FrontToRear';
+        }
+        return r;
+      }())
     };
   }
 
@@ -461,6 +497,7 @@
         height:      pt.maxHeight - pt.thickness,   // usable stacking height above board
         maxLength:   pt.maxLength,
         maxWidth:    pt.maxWidth,
+        maxHeight:   pt.maxHeight - pt.thickness,
         maxWeight:   pt.maxWeight - pt.emptyWeight,
         emptyWeight: pt.emptyWeight
       });
@@ -490,12 +527,14 @@
         maxLayersOnOrientation1: parseInt(maxLayerInp ? maxLayerInp.value : '0', 10) || 0,
         overhangAllowed:         overhangInp ? overhangInp.checked : false,
         isOptional:              false,
-        isPalletized:            false
+        isPalletized:            false,
+        turnAllowedOnFloor:      rows[i].querySelectorAll('input[type=checkbox]')[3] ? rows[i].querySelectorAll('input[type=checkbox]')[3].checked : true
       };
       if (cargoP.overhangAllowed) {
         cargoP.overhangLength = parseInt(ovhLInp ? ovhLInp.value : '0', 10) || 0;
         cargoP.overhangWidth  = parseInt(ovhWInp ? ovhWInp.value : '0', 10) || 0;
       }
+      /* ── Smart orientation / overhang enrichment (Step 1) — disabled ── */
       cargoes.push(cargoP);
     }
     return {
@@ -513,6 +552,7 @@
         isSpreadIdenticalCargoAllowed:  $('plt_spreadIdenticalPallet') ? $('plt_spreadIdenticalPallet').checked : true,
         algorithmType:                  ($('plt_algorithmType') && $('plt_algorithmType').value) || 'Optimization',
         optimizationLevel:              parseInt(($('plt_optimLevel') && $('plt_optimLevel').value) || '4', 10) || 4,
+        fillDirection:                  'FrontToRear',
         bestFitContainersSelectionType: $('bestFitType').value
       }
     };
@@ -616,6 +656,9 @@
         height:        parseFloat($('ctnHeight').value)      || 2794,
         emptyWeight:   parseFloat($('ctnEmptyWeight').value) || 0,
         maxVolPercent: 100,
+        maxLength:     parseFloat($('ctnLength').value)      || 0,
+        maxWidth:      parseFloat($('ctnWidth').value)       || 0,
+        maxHeight:     parseFloat($('ctnHeight').value)      || 0,
         priority:      parseInt($('ctnPriority').value, 10)  || 0,
         vehicleType:   $('vehicleType') ? $('vehicleType').value : 'Dry'
       }],
