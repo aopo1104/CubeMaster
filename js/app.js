@@ -330,11 +330,78 @@
   }
   window.setCalcMode = setCalcMode;
 
+  function buildPalletRules() {
+    return {
+      isWeightLimited:                true,
+      isUnitloadFirst:                $('isUnitloadFirst').checked,
+      isSpreadIdenticalCargoAllowed:  $('isSpreadIdentical').checked,
+      algorithmType:                  'Optimization',
+      optimizationLevel:              4,
+      fillDirection:                  'FrontToRear',
+      bestFitContainersSelectionType: $('bestFitType').value
+    };
+  }
+
+  function buildCargoesFromSkuRows(opts) {
+    opts = opts || {};
+    var rows = $('skuBody').querySelectorAll('tr');
+    var cargoes = [];
+
+    for (var i = 0; i < rows.length; i++) {
+      var inp = rows[i].querySelectorAll('input');
+      if (!inp[0] || !inp[0].value.trim()) continue;
+
+      var orientSel       = rows[i].querySelector('.orientSel');
+      var maxLayerInp     = inp[6];
+      var ovhLInp         = inp[8];
+      var ovhWInp         = inp[9];
+      var overhangInp     = rows[i].querySelectorAll('input[type=checkbox]')[0];
+      var isOptionalChk   = rows[i].querySelectorAll('input[type=checkbox]')[1];
+      var isPalletizedChk = rows[i].querySelectorAll('input[type=checkbox]')[2];
+      var turnAllowedChk  = rows[i].querySelectorAll('input[type=checkbox]')[3];
+
+      var cargoObj = {
+        style:  'Shipcase',
+        name:   inp[0].value.trim(),
+        length: parseFloat(inp[1].value) || 0,
+        width:  parseFloat(inp[2].value) || 0,
+        height: parseFloat(inp[3].value) || 0,
+        weight: parseFloat(inp[4].value) || 0,
+        qty:    parseInt(inp[5].value, 10) || 0,
+        orientationsAllowed:      orientSel ? orientSel.value : 'OrientationsAll',
+        maxLayersOnOrientation1:  parseInt(maxLayerInp ? maxLayerInp.value : '0', 10) || 0,
+        overhangAllowed:          overhangInp ? overhangInp.checked : false,
+        isOptional:               isOptionalChk ? isOptionalChk.checked : false,
+        isPalletized:             opts.forcePalletized ? true : (isPalletizedChk ? isPalletizedChk.checked : false),
+        turnAllowedOnFloor:       turnAllowedChk ? turnAllowedChk.checked : true
+      };
+
+      if (cargoObj.overhangAllowed) {
+        cargoObj.overhangLength = parseInt(ovhLInp ? ovhLInp.value : '0', 10) || 0;
+        cargoObj.overhangWidth  = parseInt(ovhWInp ? ovhWInp.value : '0', 10) || 0;
+      }
+
+      if (opts.palletSpec) {
+        cargoObj.palletizing = {
+          pallet:                opts.palletSpec,
+          flatPalletTop:         true,
+          partialPalletsAllowed: $('plt_partialAllowed').checked,
+          remainQtyToMixPallet:  $('plt_mixPallet').checked,
+          remainQtyToVehicle:    false
+        };
+      }
+
+      cargoes.push(cargoObj);
+    }
+
+    return cargoes;
+  }
+
   /* ── build payload (mode-aware, opts.maxHeight overrides pallet height) ── */
   function buildPayload(opts) {
     opts = opts || {};
     var mode = ($('calcMode') && $('calcMode').value) || 'pallet';
-    var rows = $('skuBody').querySelectorAll('tr'), cargoes = [];
+    var cargoes = [];
 
     /* pltSpec for enrichCargo when mode==='pallet' (the container IS the pallet) */
     var _enrPltSpec = (mode === 'pallet') ? (function () {
@@ -361,49 +428,10 @@
       };
     }
 
-    for (var i=0; i<rows.length; i++) {
-      var inp = rows[i].querySelectorAll('input');
-      if (!inp[0] || !inp[0].value.trim()) continue;
-      var orientSel       = rows[i].querySelector('.orientSel');
-      var maxLayerInp     = inp[6];
-      var ovhLInp         = inp[8];   // overhangLength text input
-      var ovhWInp         = inp[9];   // overhangWidth text input
-      var overhangInp     = rows[i].querySelectorAll('input[type=checkbox]')[0];
-      var isOptionalChk   = rows[i].querySelectorAll('input[type=checkbox]')[1];
-      var isPalletizedChk = rows[i].querySelectorAll('input[type=checkbox]')[2];
-
-      var forcePalletized = (mode === 'pallet2ctn');
-      var turnAllowedChk  = rows[i].querySelectorAll('input[type=checkbox]')[3];
-      var cargoObj = {
-        style:  'Shipcase',
-        name:   inp[0].value.trim(),
-        length: parseFloat(inp[1].value)||0, width: parseFloat(inp[2].value)||0, height: parseFloat(inp[3].value)||0,
-        weight: parseFloat(inp[4].value)||0,
-        qty:    parseInt(inp[5].value,10)||0,
-        orientationsAllowed:      orientSel ? orientSel.value : 'OrientationsAll',
-        maxLayersOnOrientation1:  parseInt(maxLayerInp ? maxLayerInp.value : '0', 10)||0,
-        overhangAllowed:          overhangInp ? overhangInp.checked : false,
-        isOptional:   isOptionalChk   ? isOptionalChk.checked    : false,
-        isPalletized: forcePalletized ? true : (isPalletizedChk ? isPalletizedChk.checked : false),
-        turnAllowedOnFloor: turnAllowedChk ? turnAllowedChk.checked : true
-      };
-      if (cargoObj.overhangAllowed) {
-        cargoObj.overhangLength = parseInt(ovhLInp ? ovhLInp.value : '0', 10) || 0;
-        cargoObj.overhangWidth  = parseInt(ovhWInp ? ovhWInp.value : '0', 10) || 0;
-      }
-      /* ── Smart orientation / overhang enrichment (pallet mode) — disabled ── */
-
-      if (mode === 'pallet2ctn') {
-        cargoObj.palletizing = {
-          pallet:                palletSpec,
-          flatPalletTop:         true,
-          partialPalletsAllowed: $('plt_partialAllowed').checked,
-          remainQtyToMixPallet:  $('plt_mixPallet').checked,
-          remainQtyToVehicle:    false
-        };
-      }
-      cargoes.push(cargoObj);
-    }
+    cargoes = buildCargoesFromSkuRows({
+      forcePalletized: mode === 'pallet2ctn',
+      palletSpec:      mode === 'pallet2ctn' ? palletSpec : null
+    });
 
     var mw = parseFloat($('maxWeight').value) || (mode==='pallet' ? 800 : 30000);
 
@@ -434,20 +462,14 @@
         vehicleType:   $('vehicleType') ? $('vehicleType').value : 'Dry'
       }],
       cargoes: cargoes,
-      rules: (function () {
-        var r = {
-          isWeightLimited:               true,
-          isUnitloadFirst:               $('isUnitloadFirst').checked,
-          isSpreadIdenticalCargoAllowed: $('isSpreadIdentical').checked,
-          bestFitContainersSelectionType: $('bestFitType').value
-        };
-        if (mode === 'pallet') {
-          r.algorithmType     = 'Optimization';
-          r.optimizationLevel = 4;
-          r.fillDirection     = 'FrontToRear';
-        }
-        return r;
-      }())
+      rules: (mode === 'pallet')
+        ? buildPalletRules()
+        : {
+            isWeightLimited:               true,
+            isUnitloadFirst:               $('isUnitloadFirst').checked,
+            isSpreadIdenticalCargoAllowed: $('isSpreadIdentical').checked,
+            bestFitContainersSelectionType: $('bestFitType').value
+          }
     };
   }
 
@@ -505,38 +527,7 @@
     // Expose first pallet spec for 3D visualization
     CM._activePalletSpec = pltTypes[0] || null;
 
-    var rows = $('skuBody').querySelectorAll('tr');
-    var cargoes = [];
-    for (var i = 0; i < rows.length; i++) {
-      var inp = rows[i].querySelectorAll('input');
-      if (!inp[0] || !inp[0].value.trim()) continue;
-      var orientSel   = rows[i].querySelector('.orientSel');
-      var maxLayerInp = inp[6];
-      var ovhLInp     = inp[8];
-      var ovhWInp     = inp[9];
-      var overhangInp = rows[i].querySelectorAll('input[type=checkbox]')[0];
-      var cargoP = {
-        style:                   'Shipcase',
-        name:                    inp[0].value.trim(),
-        length:                  parseFloat(inp[1].value) || 0,
-        width:                   parseFloat(inp[2].value) || 0,
-        height:                  parseFloat(inp[3].value) || 0,
-        weight:                  parseFloat(inp[4].value) || 0,
-        qty:                     parseInt(inp[5].value, 10) || 0,
-        orientationsAllowed:     orientSel ? orientSel.value : 'OrientationsAll',
-        maxLayersOnOrientation1: parseInt(maxLayerInp ? maxLayerInp.value : '0', 10) || 0,
-        overhangAllowed:         overhangInp ? overhangInp.checked : false,
-        isOptional:              false,
-        isPalletized:            false,
-        turnAllowedOnFloor:      rows[i].querySelectorAll('input[type=checkbox]')[3] ? rows[i].querySelectorAll('input[type=checkbox]')[3].checked : true
-      };
-      if (cargoP.overhangAllowed) {
-        cargoP.overhangLength = parseInt(ovhLInp ? ovhLInp.value : '0', 10) || 0;
-        cargoP.overhangWidth  = parseInt(ovhWInp ? ovhWInp.value : '0', 10) || 0;
-      }
-      /* ── Smart orientation / overhang enrichment (Step 1) — disabled ── */
-      cargoes.push(cargoP);
-    }
+    var cargoes = buildCargoesFromSkuRows();
     return {
       document: {
         title:           ($('docTitle').value.trim() || 'Step1') + ' — 托盘计算',
@@ -546,15 +537,7 @@
       },
       containers: containers,
       cargoes: cargoes,
-      rules: {
-        isWeightLimited:                true,
-        isUnitloadFirst:                true,
-        isSpreadIdenticalCargoAllowed:  $('plt_spreadIdenticalPallet') ? $('plt_spreadIdenticalPallet').checked : true,
-        algorithmType:                  ($('plt_algorithmType') && $('plt_algorithmType').value) || 'Optimization',
-        optimizationLevel:              parseInt(($('plt_optimLevel') && $('plt_optimLevel').value) || '4', 10) || 4,
-        fillDirection:                  'FrontToRear',
-        bestFitContainersSelectionType: $('bestFitType').value
-      }
+      rules: buildPalletRules()
     };
   }
 
@@ -977,6 +960,71 @@
     return cargoVol / ctnVol * 100;
   }
 
+  // Real loaded envelope: prefer spaces.placements (actual coordinates) over configured size fields.
+  function getLoadedSize(fc) {
+    if (!fc) return { length: null, width: null, height: null, source: 'none' };
+
+    var spaces = fc.spaces || [];
+    var minL = Infinity, minW = Infinity, minH = Infinity;
+    var maxL = -Infinity, maxW = -Infinity, maxH = -Infinity;
+    var hasPlacement = false;
+
+    for (var si = 0; si < spaces.length; si++) {
+      var placements = (spaces[si] && spaces[si].placements) || [];
+      for (var pi = 0; pi < placements.length; pi++) {
+        var pl = placements[pi] || {};
+        var pos = pl.pos || {};
+        var size = pl.size || {};
+        var pL = parseFloat(pos.length);
+        var pW = parseFloat(pos.width);
+        var pH = parseFloat(pos.height);
+        var sL = parseFloat(size.length);
+        var sW = parseFloat(size.width);
+        var sH = parseFloat(size.height);
+        if ([pL, pW, pH, sL, sW, sH].some(function(v) { return isNaN(v); })) continue;
+
+        hasPlacement = true;
+        if (pL < minL) minL = pL;
+        if (pW < minW) minW = pW;
+        if (pH < minH) minH = pH;
+        if (pL + sL > maxL) maxL = pL + sL;
+        if (pW + sW > maxW) maxW = pW + sW;
+        if (pH + sH > maxH) maxH = pH + sH;
+      }
+    }
+
+    if (hasPlacement) {
+      return {
+        length: Math.max(0, Math.round(maxL - minL)),
+        width:  Math.max(0, Math.round(maxW - minW)),
+        height: Math.max(0, Math.round(maxH - minH)),
+        source: 'spaces'
+      };
+    }
+
+    var as = fc.actualSize || {};
+    if (as.length != null || as.width != null || as.height != null) {
+      return {
+        length: parseFloat(as.length) || null,
+        width:  parseFloat(as.width)  || null,
+        height: parseFloat(as.height) || null,
+        source: 'actualSize'
+      };
+    }
+
+    var ls = fc.loadSize || {};
+    if (ls.length != null || ls.width != null || ls.height != null) {
+      return {
+        length: parseFloat(ls.length) || null,
+        width:  parseFloat(ls.width)  || null,
+        height: parseFloat(ls.height) || null,
+        source: 'loadSize'
+      };
+    }
+
+    return { length: null, width: null, height: null, source: 'none' };
+  }
+
   /* ── render all results ── */
   function renderResult(data) {
     var item = pickItem(data);
@@ -1016,15 +1064,19 @@
     CM.drawViz(containers[0] || null);
 
     if (!containers.length) {
-      setHtml('containerRows','<tr><td colspan="6"><div class="empty-state">无容器数据</div></td></tr>');
+      setHtml('containerRows','<tr><td colspan="7"><div class="empty-state">无容器数据</div></td></tr>');
     } else {
       var ch='';
       for (var i=0; i<containers.length; i++) {
         var c=containers[i], cs=c.loadSummary||{};
+        var asz = getLoadedSize(c);
+        var aszTxt = (asz.length || '—') + '×' + (asz.width || '—') + '×' + (asz.height || '—');
+        if (asz.source !== 'spaces') aszTxt += ' *';
         var rowCls = (i===0) ? ' class="ctn-row-sel"' : '';
         var mfst = c.manifest || [];
         ch+='<tr'+rowCls+' onclick="selectContainer('+i+')">';
         ch+='<td><strong>'+e(c.name)+'</strong></td>';
+        ch+='<td>'+e(aszTxt)+'</td>';
         ch+='<td>'+mfst.length+'</td>';
         ch+='<td>'+e(safeGet(cs,'piecesLoaded'))+'</td>';
         ch+='<td>'+bar(cs.volumeUtilization)+' '+pct(cs.volumeUtilization)+'</td>';
@@ -1128,7 +1180,7 @@
       var i   = indices[ii];
       var plt  = _step1Pallets[i];
       var ls   = plt.loadSummary || {};
-      var lsz  = plt.loadSize   || plt.actualSize || {};  // loadSize for actual stacking envelope
+      var asz  = getLoadedSize(plt);
       var mfst = plt.manifest    || [];
       var skuNames = [];
       var vol = 0;
@@ -1138,7 +1190,7 @@
         var qty = parseFloat(me.cargoesLoaded != null ? me.cargoesLoaded : mc.qty) || 0;
         vol += qty * (parseFloat(mc.length)||0) * (parseFloat(mc.width)||0) * (parseFloat(mc.height)||0) / 1e9;
       }
-      var totalH = Math.round(lsz.height || 0) + pltTh;
+            var totalH = (asz.height != null) ? (Math.round(asz.height) + pltTh) : null;
       var vU = ls.volumeUtilization || 0;
       var wU = ls.weightUtilization || 0;
       html += '<tr class="pallet-row" data-s1idx="' + i + '" onclick="selectPallet(' + i + ')">';
@@ -1147,8 +1199,9 @@
       html += '<td>' + (ls.piecesLoaded || 0) + '</td>';
       html += '<td>' + ((ls.weightLoaded || 0)).toFixed(1) + '</td>';
       html += '<td>' + vol.toFixed(4) + '</td>';
-      html += '<td>' + (lsz.length||'—') + '×' + (lsz.width||'—') + '×' + (lsz.height||'—') +
-              '<br><small style="color:var(--muted)">总高 ' + totalH + ' mm</small></td>';
+            html += '<td>' + (asz.length||'—') + '×' + (asz.width||'—') + '×' + (asz.height||'—') +
+              (asz.source === 'spaces' ? '' : '<br><small style="color:#f59e0b">*非spaces反算</small>') +
+              '<br><small style="color:var(--muted)">总高 ' + (totalH == null ? '—' : totalH) + ' mm</small></td>';
       html += '<td>' + bar(vU) + ' ' + pct(vU) + '</td>';
       html += '<td>' + pct(wU) + '</td>';
       html += '</tr>';
