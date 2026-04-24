@@ -498,6 +498,11 @@
 
   /* ── two-step pallet→container calculation (先托后柜) ── */
 
+  function makeFlowId(prefix) {
+    var p = prefix || 'flow';
+    return p + '_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  }
+
   function buildPalletStepPayload() {
     var pltTypes = readPalletTypes();
     if (!pltTypes.length) {
@@ -666,7 +671,8 @@
     $('wRaw').style.display = 'block';
     setStatus('第1步：计算托盘装载中…', 'loading');
 
-    var qs1 = 'UOM=UnitMetric&placementsCreated=true&spacesCreated=true';
+    var flowId = makeFlowId('p2c');
+    var qs1 = 'UOM=UnitMetric&placementsCreated=true&spacesCreated=true&flowType=pallet2ctn&flowId=' + encodeURIComponent(flowId) + '&step=1';
     if ($('chkGraphics') && $('chkGraphics').checked) qs1 += '&graphicsCreated=true&graphicsImageWidth=800&graphicsImageDepth=600';
     fetchApiAsync('/cubemaster/api/loads?' + qs1, 'POST', palletPayload)
       .then(function(r1) {
@@ -698,7 +704,7 @@
         $('req2Json').value  = JSON.stringify(ctnPayload, null, 2);
         $('resp2Json').value = '等待中…';
 
-        var qs2 = 'UOM=UnitMetric&placementsCreated=true&spacesCreated=true';
+        var qs2 = 'UOM=UnitMetric&placementsCreated=true&spacesCreated=true&flowType=pallet2ctn&flowId=' + encodeURIComponent(flowId) + '&step=2';
         if ($('chkGraphics') && $('chkGraphics').checked) qs2 += '&graphicsCreated=true&graphicsImageWidth=800&graphicsImageDepth=600';
         fetchApiAsync('/cubemaster/api/loads?' + qs2, 'POST', ctnPayload)
           .then(function(r2) {
@@ -1373,6 +1379,7 @@
     $('req1Json').value = JSON.stringify(payload, null, 2);
     $('wRaw').style.display = 'block';
     var qs = 'UOM=UnitMetric&placementsCreated=true';
+    if (mode === 'pallet') qs += '&flowType=pallet';
     if ($('chkGraphics') && $('chkGraphics').checked) qs += '&graphicsCreated=true&graphicsImageWidth=800&graphicsImageDepth=600';
     if ($('chkSpaces')   && $('chkSpaces').checked)   qs += '&spacesCreated=true';
     fetchApi('/cubemaster/api/loads?'+qs,'POST',payload,handleResponse);

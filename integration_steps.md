@@ -103,6 +103,59 @@ Map API output to UI cards/tables:
 3. Cargo manifest table: each item in `manifest`
 4. Warnings/errors: `status`, `message`, `calculationError`
 
+## Step 6: Save input/output JSON to MySQL
+
+Use the prepared SQL script in this workspace:
+
+1. Open MySQL client and run:
+
+```sql
+SOURCE db/mysql_schema.sql;
+```
+
+2. The script creates:
+
+- database: `cubemaster`
+- table: `api_io_logs`
+   - `input_json` (JSON)
+   - `output_json` (JSON)
+   - `created_at` (DATETIME, default current timestamp)
+
+3. Verify:
+
+```sql
+USE cubemaster;
+SELECT id, created_at FROM api_io_logs ORDER BY created_at DESC LIMIT 20;
+```
+
+## Step 7: Split logs by flow type (pallet vs pallet2ctn)
+
+Run the timestamped migration file:
+
+```sql
+SOURCE db/20260424_155956_add_split_log_tables.sql;
+```
+
+It creates:
+
+1. `pallet_load_logs`
+   - `input_json`
+   - `output_json`
+   - `response_status`
+   - `created_at`
+
+2. `pallet2ctn_load_logs`
+   - `flow_id`
+   - `step1_input_json`, `step1_output_json`
+   - `step2_input_json`, `step2_output_json`
+   - `step1_status`, `step2_status`
+   - `created_at`, `updated_at`
+
+The proxy now writes by query markers:
+
+- `flowType=pallet` → `pallet_load_logs`
+- `flowType=pallet2ctn&flowId=...&step=1|2` → `pallet2ctn_load_logs`
+
 ## 4) Files provided in this workspace
 
 1. `1.py`: CLI integration helper with step commands.
