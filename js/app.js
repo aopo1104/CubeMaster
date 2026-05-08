@@ -391,6 +391,16 @@
         };
       }
 
+      // 按托盘装载算法对朝向和超托进行智能优化（仅当调用方传入 enrPltSpec 时触发）
+      if (opts.enrPltSpec !== undefined && CM.palletizeHelper) {
+        CM.palletizeHelper.enrichCargo(cargoObj, opts.enrPltSpec, {
+          orientSel:       orientSel ? orientSel.value : 'OrientationsAll',
+          overhangChecked: overhangInp ? overhangInp.checked : false,
+          ovhL:            ovhLInp ? ovhLInp.value : '0',
+          ovhW:            ovhWInp ? ovhWInp.value : '0'
+        });
+      }
+
       cargoes.push(cargoObj);
     }
 
@@ -403,12 +413,21 @@
     var mode = ($('calcMode') && $('calcMode').value) || 'pallet';
     var cargoes = [];
 
-    /* pltSpec for enrichCargo when mode==='pallet' (the container IS the pallet) */
-    var _enrPltSpec = (mode === 'pallet') ? (function () {
-      var L = parseFloat($('ctnLength').value) || 1200;
-      var W = parseFloat($('ctnWidth').value)  || 1000;
-      return { length: L, width: W, maxLength: L + 80, maxWidth: W + 60 };
-    }()) : null;
+    /* pltSpec for enrichCargo —
+     *   pallet   : 托盘本身作为容器，带超托预算
+     *   direct   : 直装柜，传 null → 只做朝向分类，不计算超托
+     *   pallet2ctn: 使用第一个托盘规格（与 palletSpec 相同）
+     */
+    var _enrPltSpec;
+    if (mode === 'pallet') {
+      var _epL = parseFloat($('ctnLength').value) || 1200;
+      var _epW = parseFloat($('ctnWidth').value)  || 1000;
+      _enrPltSpec = { length: _epL, width: _epW, maxLength: _epL + 80, maxWidth: _epW + 60 };
+    } else if (mode === 'direct') {
+      _enrPltSpec = null;   // 直装柜：只做智能朝向分类，不处理超托
+    } else {
+      _enrPltSpec = undefined;  // pallet2ctn 在 buildPalletStepPayload 里单独处理
+    }
 
     var palletSpec = null;
     if (mode === 'pallet2ctn') {
@@ -430,7 +449,8 @@
 
     cargoes = buildCargoesFromSkuRows({
       forcePalletized: mode === 'pallet2ctn',
-      palletSpec:      mode === 'pallet2ctn' ? palletSpec : null
+      palletSpec:      mode === 'pallet2ctn' ? palletSpec : null,
+      enrPltSpec:      _enrPltSpec   // undefined → 不启用 enrichCargo；null → 只分类不超托
     });
 
     var mw = parseFloat($('maxWeight').value) || (mode==='pallet' ? 800 : 30000);
@@ -462,7 +482,8 @@
         vehicleType:   $('vehicleType') ? $('vehicleType').value : 'Dry'
       }],
       cargoes: cargoes,
-      rules: (mode === 'pallet')
+      // 直装柜（direct）与托盘装载（pallet）均使用优化算法规则；pallet2ctn 通过专属函数处理
+      rules: (mode === 'pallet' || mode === 'direct')
         ? buildPalletRules()
         : {
             isWeightLimited:               true,
@@ -532,7 +553,14 @@
     // Expose first pallet spec for 3D visualization
     CM._activePalletSpec = pltTypes[0] || null;
 
-    var cargoes = buildCargoesFromSkuRows();
+    // 先托后柜 Step1：向 enrichCargo 传入第一个托盘规格，启用智能朝向 + 超托优化
+    var _pltEnrSpec = pltTypes[0] ? {
+      length:    pltTypes[0].length,
+      width:     pltTypes[0].width,
+      maxLength: pltTypes[0].maxLength || (pltTypes[0].length + 80),
+      maxWidth:  pltTypes[0].maxWidth  || (pltTypes[0].width  + 60)
+    } : null;
+    var cargoes = buildCargoesFromSkuRows({ enrPltSpec: _pltEnrSpec });
     return {
       document: {
         title:           ($('docTitle').value.trim() || 'Step1') + ' — 托盘计算',
@@ -651,12 +679,8 @@
         vehicleType:   $('vehicleType') ? $('vehicleType').value : 'Dry'
       }],
       cargoes: cargoes,
-      rules: {
-        isWeightLimited:                true,
-        isUnitloadFirst:                $('isUnitloadFirst').checked,
-        isSpreadIdenticalCargoAllowed:  $('isSpreadIdentical').checked,
-        bestFitContainersSelectionType: $('bestFitType').value
-      }
+      // 先托后柜 Step2 装柜：同样使用优化算法规则以提高体积利用率
+      rules: buildPalletRules()
     };
   }
 
